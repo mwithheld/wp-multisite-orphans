@@ -233,9 +233,9 @@ class Orphan_Tables extends \WP_CLI_Command {
         \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
         return $tablenames;
     }
-    
+
     /**
-     * Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     * Prints a list of orphaned folders in wp-content/uploads/sites/<n> and wp-content/blogs.dir/<n>. No parameters.
      *
      * ## EXAMPLE
      * wp-cli orphan-tables list_folders
@@ -371,7 +371,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
     /**
      * Create SQL drop statements for each of the list of table names.
-     * 
+     *
      * @param array $tablenames Array of table names to create drop statements for, each name including the DB prefix.
      * @return array List of SQL drop statements.
      */
@@ -458,13 +458,18 @@ class Orphan_Tables extends \WP_CLI_Command {
 
     /**
      * Get a list of integers representing existing multisite blog ids from the prefix_blogs table->blog_id field.
-     * 
+     *
      * @return array See the description.
      */
-    private function get_existing_blog_ids():array {
+    private function get_existing_blog_ids(): array {
         return $this->db->get_col("SELECT blog_id FROM {$this->db->blogs} ORDER BY blog_id");
     }
-    
+
+    /**
+     * Get a list of all table names in the database schema including the prefix.
+     *
+     * @return array See the description.
+     */
     private function get_all_db_tablenames() {
         $sql = "SELECT table_name "
                 . "FROM information_schema.tables "
@@ -475,7 +480,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         //\WP_CLI::debug("{$fxn}::About to run sql={$sql}");
         return $this->db->get_col($sql);
     }
-    
+
     /**
      * Get a list of tables that do not belong to a WP blog. Renamed tables do not show up as orphaned tables.
      *
@@ -491,7 +496,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         //These  blogs_ids represent actual multisite child blogs we will want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
         \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
-        
+
         //Gather the orphaned table names here.
         $orphan_tablenames = [];
 
