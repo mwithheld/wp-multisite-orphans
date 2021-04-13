@@ -15,7 +15,7 @@ wp-cli help orphan-tables drop_tables
 
 wp-cli orphan-tables list_drops         Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_orphaned      Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
-wp-cli orphan-tables list_renamed       Prints a list of orphaned tables renamed by this plugin; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+wp-cli orphan-tables list_renamed       Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_renames       Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 
 

@@ -22,7 +22,7 @@ class Orphan_Tables extends \WP_CLI_Command {
     ];
 
     //==========================================================================
-    // Methods that provide a user-accessible interface for this plugin.
+    // Methods that provide a user-accessible interface for this package.
     //==========================================================================
 
     /**
@@ -177,7 +177,7 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Prints a list of orphaned tables renamed by this plugin; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     * Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
      * wp-cli orphan-tables list_renamed
@@ -197,7 +197,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($tablenames as &$tablename) {
             \WP_CLI::log("{$tablename}");
         }
-        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this plugin");
+        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
         return $tablenames;
     }
 
@@ -214,7 +214,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * wp-cli orphan-tables do_renames --limit=1 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
-     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this plugin:
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
      *
      * @return object {changed=><int>, failed=><int>}
      */
@@ -249,7 +249,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * wp-cli orphan-tables do_drops --limit=14 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
-     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this plugin:
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
      *
      * @return \stdClass Result tallies {changed=><int>, failed=><int>}
      */
@@ -327,7 +327,7 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Get a list of orphaned tables renamed by this plugin. Renamed tables do not show up as orphaned tables.
+     * Get a list of orphaned tables renamed by this package. Renamed tables do not show up as orphaned tables.
      *
      * @return array List of DB table names that have been renamed by this tool.
      */
