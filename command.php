@@ -17,14 +17,17 @@ class Orphan_Tables extends \WP_CLI_Command {
     private $_nl = "\n";
     private $_rename_label;
     private $_flags = [
-        'dryrun' => ["name"=> 'dry-run', 'default'=>false],
-        'limit' => ["name"=> 'limit', 'default'=>0],
-        ];
+        'dryrun' => ["name" => 'dry-run', 'default' => false],
+        'limit'  => ["name" => 'limit', 'default' => 0],
+    ];
 
     //==========================================================================
     // Methods that provide a user-accessible interface for this plugin.
     //==========================================================================
 
+    /**
+     * Set up.
+     */
     public function __construct() {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
@@ -35,9 +38,9 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $this->db = $GLOBALS['wpdb'];
         $this->_rename_label = \str_replace(__NAMESPACE__ . '\\', '', __CLASS__);
-        $this->_flags = (object)$this->_flags;
-        foreach($this->_flags as $key=>$value) {
-            $this->_flags->$key = (object)$value;
+        $this->_flags = (object) $this->_flags;
+        foreach ($this->_flags as $key => $value) {
+            $this->_flags->$key = (object) $value;
         }
     }
 
@@ -63,9 +66,11 @@ class Orphan_Tables extends \WP_CLI_Command {
 //    }
 
     /**
-     * Prints the rename label; no changes are made.
-     * No parameters.
-     * 
+     * Prints the rename label; no changes are made. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables get_label
+     *
      * @return void
      */
     public function get_label() {
@@ -74,9 +79,11 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Prints orphan table names in plain text; no changes are made.
-     * No parameters.
-     * 
+     * Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables list_orphaned
+     *
      * @return void
      */
     public function list_orphaned(): array {
@@ -97,9 +104,11 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Prints drop statements for orphan tables; no changes are made.
-     * No parameters.
-     * 
+     * Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables list_drops
+     *
      * @return void
      */
     public function list_drops(): array {
@@ -131,9 +140,11 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Prints rename statements for orphan tables using the standard label {get_label}; no changes are made.
-     * No parameters.
-     * 
+     * Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables list_renames
+     *
      * @return void
      */
     public function list_renames(): array {
@@ -166,9 +177,11 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Prints a list of orphaned tables renamed by this plugin; no changes are made.
-     * No parameters.
-     * 
+     * Prints a list of orphaned tables renamed by this plugin; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables list_renamed
+     *
      * @return void
      */
     public function list_renamed(): array {
@@ -189,25 +202,27 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Rename orphaned tables with a standard label + hashed table name.
-     * @param int $limit Only attempt rename on this number of tables (when sorted alphabetically ASC).
-     * 
-     * ## Example
+     * Rename orphaned tables with a standard label + hashed table name. Renamed tables do not show up as orphaned tables.
+     *
+     * ## PARAMETERS
+     *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
+     *      --dry-run Do not actually make any changes - just show what would be done.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables do_renames
+     * wp-cli orphan-tables do_renames --dry-run
      * wp-cli orphan-tables do_renames --limit=1 --debug --dry-run --yes
-     * 
-     * @return object {renamed=><int>, failed=><int>}
+     *
+     * @param array $args Command-line arguments array from WP-CLI. Unused here.
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this plugin:
+     *
+     * @return object {changed=><int>, failed=><int>}
      */
     public function do_renames(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
-        $tablenames = $this->get_renamed_tables();
-        if (\count($tablenames) < 1) {
-            \WP_CLI::error("No tables found");
-            return [];
-        }
-
-        WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
         $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
@@ -215,9 +230,44 @@ class Orphan_Tables extends \WP_CLI_Command {
         $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
-        $results = $this->rename_tables($this->list_drops(), $limit, $dryrun);
+        $results = $this->execute_statements($this->list_renames(), $limit, $dryrun);
 
-        \WP_CLI::success("Total " . \count($tablenames) . " orphan tables; Renamed={$results->renamed}; Failed={$results->failed}");
+        \WP_CLI::success("Total " . $results->changed + $results->failed . " orphan tables; Changed={$results->changed}; Failed={$results->failed}");
+        return $results;
+    }
+
+    /**
+     * Drop orphaned tables. Renamed tables do not show up as orphaned tables.
+     *
+     * ## PARAMETERS
+     *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
+     *      --dry-run Do not actually make any changes - just show what would be done.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables do_drops
+     * wp-cli orphan-tables do_drops --dry-run
+     * wp-cli orphan-tables do_drops --limit=14 --debug --dry-run --yes
+     *
+     * @param array $args Command-line arguments array from WP-CLI. Unused here.
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this plugin:
+     *
+     * @return \stdClass Result tallies {changed=><int>, failed=><int>}
+     */
+    public function do_drops(array $args, array $assoc_args): \stdClass {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+
+        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
+
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
+
+        $results = $this->execute_statements($this->list_drops(), $limit, $dryrun);
+
+        \WP_CLI::success("Total " . $results->changed + $results->failed . " orphan tables; Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
@@ -226,21 +276,22 @@ class Orphan_Tables extends \WP_CLI_Command {
     //==========================================================================
 
     /**
-     * Rename each of the tables passed in with a standard label + hashed table name.
-     * 
+     * Execute the list of passed-in SQL statements.
+     * E.g. To rename each of the tables passed in with a standard label + hashed table name.
+     *
      * @param array $statements SQL RENAME TABLE commands e.g. from list_renamed().
      * @param int $limit Only attempt rename on this number of tables (when sorted alphabetically ASC).
      * @param bool $dryrun True to not actually run the queries, just print them.
-     * @return \stdClass
+     * @return \stdClass Result tallies {changed=><int>, failed=><int>}
      */
-    private function rename_tables(array $statements, int $limit = 0, bool $dryrun = false): \stdClass {
+    private function execute_statements(array $statements, int $limit = 0, bool $dryrun = false): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with " . \count($statements) . " statements; \$limit={$limit}; \$dryrun={$dryrun}");
 
         $dryrun && \WP_CLI::debug("{$fxn}::Dry run, so do not actually make any changes");
         $limit && \WP_CLI::debug("{$fxn}::Limiting to {$limit} tables");
 
-        $returnThis = (object) ['renamed' => 0, 'failed' => 0];
+        $returnThis = (object) ['changed' => 0, 'failed' => 0];
         if (empty($statements) || $limit < 0) {
             \WP_CLI::debug("{$fxn}::No statements or invalid limit");
             return $returnThis;
@@ -263,7 +314,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             }
 
             if ($result = $this->db->query($statement)) {
-                $returnThis->renamed++;
+                $returnThis->changed++;
                 \WP_CLI::success("{$fxn}::\$statement={$statement}");
             } else {
                 $returnThis->failed++;
@@ -273,18 +324,12 @@ class Orphan_Tables extends \WP_CLI_Command {
         }
 
         return $returnThis;
-
-//            if ($this->db->query("DROP TABLE IF EXISTS $table")) {
-//                $i++;
-//                \WP_CLI::success("Succesfully dropped table " . $table);
-//            } else {
-//                $j++;
-//                \WP_CLI::success("Could not drop table " . $table);
-//            }
     }
 
     /**
-     * Get a list of orphaned tables renamed by this plugin.
+     * Get a list of orphaned tables renamed by this plugin. Renamed tables do not show up as orphaned tables.
+     *
+     * @return array List of DB table names that have been renamed by this tool.
      */
     private function get_renamed_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
@@ -301,7 +346,9 @@ class Orphan_Tables extends \WP_CLI_Command {
     }
 
     /**
-     * Get a list of tables that do not belong to a WP blog.
+     * Get a list of tables that do not belong to a WP blog. Renamed tables do not show up as orphaned tables.
+     *
+     * @return array List of DB table names that do not have a matching entry in the WP Multisite wp_blogs table.
      */
     private function get_orphan_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
@@ -319,6 +366,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         //These  blogs_ids represent actual multisite child blogs we will want to keep.
         $existing_blog_ids = $this->db->get_col("SELECT blog_id FROM {$this->db->blogs} ORDER BY blog_id");
+        //Gather the orphaned table names here.
         $orphan_tablenames = [];
 
         //Search tables with name prefix containing non-existing blog IDs.
@@ -344,6 +392,14 @@ class Orphan_Tables extends \WP_CLI_Command {
     // Utility methods not specific to this class.
     //==========================================================================
 
+    /**
+     * Get the child site number from a WP multisite DB table name like wp_3682_options.
+     * If no such number is found, returns zero 0.
+     *
+     * @ref https://github.com/shawnhooper/delete-orphaned-multisite-tables/blob/master/wp-cli.php
+     * @param type $tablename String DB table name.
+     * @return int The child site number, or zero if nothing found.
+     */
     private function get_number_from_table_name($tablename): int {
         $noPrefix = \preg_replace('/^' . $this->db->prefix . '/', '', $tablename);
         return (int) \substr($noPrefix, 0, \strpos($noPrefix, '_'));
