@@ -1,0 +1,20 @@
+{
+    "name": "uvic/orphan-tables",
+    "description": "WP-CLI command for cleaning orphan tables on Wordpress Multisite installations. List, generate drop statements, or drop orphan tables",
+    "type": "wp-cli-package",
+    "homepage": "https://github.com/uvic/orphan-tables",
+    "license": "MIT",
+    "authors": [],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "files": [ "command.php" ]
+    },
+    "require": {
+        "php": ">=7.2",
+        "wp-cli/wp-cli": "^2.2"
+    },
+    "require-dev": {
+        "behat/behat": "~2.5"
+    }
+}
