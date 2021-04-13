@@ -397,7 +397,9 @@ class Orphan_Tables extends \WP_CLI_Command {
                 continue;
             }
 
-            if ($result = $this->db->query($statement)) {
+            $result = $this->db->query($statement);
+            // Table renames do not return a success result.
+            if (stripos($statement, 'RENAME TABLE ') || $result) {
                 $returnThis->changed++;
                 \WP_CLI::success("{$fxn}::\$statement={$statement}");
             } else {
