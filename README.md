@@ -13,7 +13,7 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 ### Get help
 
 |Command|Help|
---- | --- | ---
+|--- | --- |
 |`wp-cli help orphan-tables`|Shows help for the orphan-tables package|
 |`wp-cli help orphan-tables list_drop_renamed`|Shows help for the list_drop_renamed sub-command|
 |`wp-cli help orphan-tables [sub-command]`|Shows help for this sub-command|
@@ -21,7 +21,7 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 ### Get info
 
 |Command|Help|
---- | --- | ---
+--- | --- |
 |`wp-cli orphan-tables list_drop_renamed`|Prints drop statements for renamed tables; no changes are made. No parameters.|
 |`wp-cli orphan-tables list_drops`|Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
 |`wp-cli orphan-tables list_orphaned`|Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
