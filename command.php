@@ -90,17 +90,17 @@ class Orphan_Tables extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $tablenames = $this->get_orphan_tables();
-        if (\count($tablenames) < 1) {
-            \WP_CLI::error("No tables found");
+        $items = $this->get_orphan_tables();
+        if (\count($items) < 1) {
+            \WP_CLI::success("No tables found");
             return [];
         }
 
-        foreach ($tablenames as &$tablename) {
-            \WP_CLI::log("$tablename");
+        foreach ($items as &$i) {
+            \WP_CLI::log("$i");
         }
-        \WP_CLI::success(\count($tablenames) . " orphan tables names");
-        return $tablenames;
+        \WP_CLI::success(\count($items) . " orphan tables names");
+        return $items;
     }
 
     /**
@@ -123,18 +123,18 @@ class Orphan_Tables extends \WP_CLI_Command {
             \WP_CLI::debug("{$fxn}::This is an interal function call");
         }
 
-        $tablenames = $this->get_orphan_tables();
+        $items = $this->get_orphan_tables();
         $returnThis = [];
-        if (\count($tablenames) < 1) {
-            !$internal && \WP_CLI::error("No tables found");
+        if (\count($items) < 1) {
+            !$internal && \WP_CLI::success("No tables found");
             return $returnThis;
         }
 
-        $returnThis = $this->create_drop_statements($tablenames);
+        $returnThis = $this->create_drop_statements($items);
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
         }
-        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables drop statements");
+        !$internal && \WP_CLI::success(\count($items) . " orphan tables drop statements");
         return $returnThis;
     }
 
@@ -158,18 +158,18 @@ class Orphan_Tables extends \WP_CLI_Command {
             \WP_CLI::debug("{$fxn}::This is an interal function call");
         }
 
-        $tablenames = $this->get_renamed_tables();
+        $items = $this->get_renamed_tables();
         $returnThis = [];
-        if (\count($tablenames) < 1) {
-            !$internal && \WP_CLI::error("No tables found");
+        if (\count($items) < 1) {
+            !$internal && \WP_CLI::success("No tables found");
             return $returnThis;
         }
 
-        $returnThis = $this->create_drop_statements($tablenames);
+        $returnThis = $this->create_drop_statements($items);
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
         }
-        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables drop statements");
+        !$internal && \WP_CLI::success(\count($items) . " orphan tables drop statements");
         return $returnThis;
     }
 
@@ -192,20 +192,20 @@ class Orphan_Tables extends \WP_CLI_Command {
             \WP_CLI::debug("{$fxn}::This is an interal function call");
         }
 
-        $tablenames = $this->get_orphan_tables();
+        $items = $this->get_orphan_tables();
         $returnThis = [];
-        if (\count($tablenames) < 1) {
-            !$internal && \WP_CLI::error("No tables found");
+        if (\count($items) < 1) {
+            !$internal && \WP_CLI::success("No tables found");
             return $returnThis;
         }
 
-        foreach ($tablenames as &$tablename) {
-            $tablename_new = \str_replace($tablename, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$tablename}"), "{$tablename}");
-            $sql = "RENAME TABLE {$tablename} TO {$tablename_new};";
+        foreach ($items as &$i) {
+            $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$i}"), "{$i}");
+            $sql = "RENAME TABLE {$i} TO {$tablename_new};";
             !$internal && \WP_CLI::log($sql);
             $returnThis[] = $sql;
         }
-        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables rename statements");
+        !$internal && \WP_CLI::success(\count($items) . " orphan tables rename statements");
         return $returnThis;
     }
 
@@ -221,17 +221,17 @@ class Orphan_Tables extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $tablenames = $this->get_renamed_tables();
-        if (\count($tablenames) < 1) {
-            \WP_CLI::error("No tables found");
+        $items = $this->get_renamed_tables();
+        if (\count($items) < 1) {
+            \WP_CLI::success("No tables found");
             return[];
         }
 
-        foreach ($tablenames as &$tablename) {
-            \WP_CLI::log("{$tablename}");
+        foreach ($items as &$i) {
+            \WP_CLI::log("{$i}");
         }
-        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
-        return $tablenames;
+        \WP_CLI::success(\count($items) . " orphan tables renamed by this package");
+        return $items;
     }
 
     /**
@@ -247,16 +247,16 @@ class Orphan_Tables extends \WP_CLI_Command {
         \WP_CLI::debug("{$fxn}::Started");
         \WP_CLI::error("{$fxn}::Not implemented");
 
-//        $tablenames = $this->get_renamed_tables();
-//        if (\count($tablenames) < 1) {
-//            \WP_CLI::error("No tables found");
-//            return[];
-//        }
-//
-//        foreach ($tablenames as &$tablename) {
-//            \WP_CLI::log("{$tablename}");
-//        }
-//        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
+        $items = $this->get_orphan_folders();
+        if (\count($items) < 1) {
+            \WP_CLI::success("No orphaned folders found");
+            return[];
+        }
+
+        foreach ($items as &$i) {
+            \WP_CLI::log("{$i}");
+        }
+        \WP_CLI::success(\count($items) . " orphaned folders");
         return [];
     }
 
@@ -519,6 +519,46 @@ class Orphan_Tables extends \WP_CLI_Command {
         return $orphan_tablenames;
     }
 
+    
+    /**
+     * Get a list of folders in wp-content/uploads/sites/<n> and wp-content/blogs.dir/<n> that do not belong to a WP blog.
+     *
+     * @return array List of DB table names that do not have a matching entry in the WP Multisite wp_blogs table.
+     */
+    private function get_orphan_folders(): array {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started");
+
+        $all_tables = $this->get_all_db_tablenames();
+        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($all_tables) . " tables from sql={$sql}");
+
+        //These  blogs_ids represent actual multisite child blogs we will want to keep.
+        $existing_blog_ids = $this->get_existing_blog_ids();
+        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
+
+        //Gather the orphaned table names here.
+        $orphan_tablenames = [];
+
+        //Search tables with name prefix containing non-existing blog IDs.
+        foreach ($all_tables as &$tablename) {
+            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$tablename}");
+            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$tablename}");
+            $table_blog_id = $this->get_number_from_table_name($tablename);
+            \WP_CLI::debug(__FUNCTION__ . "::From \$tablename={$tablename} extracted \$table_blog_id={$table_blog_id}");
+            if (empty($table_blog_id)) {
+                \WP_CLI::debug(__FUNCTION__ . "::The \$tablename={$tablename} is not a multisite child site table");
+                continue;
+            }
+            if (!in_array($table_blog_id, $existing_blog_ids)) {
+                \WP_CLI::debug(__FUNCTION__ . "::\$table_name={$tablename} does not represent an existing blog");
+                $orphan_tablenames[] = $tablename;
+            }
+        }
+
+        return $orphan_tablenames;
+    }
+    
+    
     //==========================================================================
     // Utility methods not specific to this class.
     //==========================================================================
