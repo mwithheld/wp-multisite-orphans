@@ -5,7 +5,7 @@
     "homepage": "https://github.com/mwithheld/orphan-tables",
     "license": "MIT",
     "authors": [],
-    "minimum-stability": "dev-main",
+    "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
         "files": [ "command.php" ]
