@@ -184,30 +184,29 @@ class Orphan_Tables extends \WP_CLI_Command {
     public function list_renames(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
-        \WP_CLI::error("{$fxn}::Not implemented");
-//        $internal = false;
-//        $caller = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2), 1, 1)[0];
-//        //\WP_CLI::debug("{$fxn}::caller=".\print_r($caller, true));
-//        if (isset($caller['class']) && !empty($caller['class']) && $caller['class'] == __CLASS__) {
-//            $internal = true;
-//            \WP_CLI::debug("{$fxn}::This is an interal function call");
-//        }
-//
-//        $tablenames = $this->get_orphan_tables();
-//        $returnThis = [];
-//        if (\count($tablenames) < 1) {
-//            !$internal && \WP_CLI::error("No tables found");
-//            return $returnThis;
-//        }
-//
-//        foreach ($tablenames as &$tablename) {
-//            $tablename_new = \str_replace($tablename, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$tablename}"), "{$tablename}");
-//            $sql = "RENAME TABLE {$tablename} TO {$tablename_new};";
-//            !$internal && \WP_CLI::log($sql);
-//            $returnThis[] = $sql;
-//        }
-//        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables rename statements");
-        return [];
+        $internal = false;
+        $caller = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2), 1, 1)[0];
+        //\WP_CLI::debug("{$fxn}::caller=".\print_r($caller, true));
+        if (isset($caller['class']) && !empty($caller['class']) && $caller['class'] == __CLASS__) {
+            $internal = true;
+            \WP_CLI::debug("{$fxn}::This is an interal function call");
+        }
+
+        $tablenames = $this->get_orphan_tables();
+        $returnThis = [];
+        if (\count($tablenames) < 1) {
+            !$internal && \WP_CLI::error("No tables found");
+            return $returnThis;
+        }
+
+        foreach ($tablenames as &$tablename) {
+            $tablename_new = \str_replace($tablename, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$tablename}"), "{$tablename}");
+            $sql = "RENAME TABLE {$tablename} TO {$tablename_new};";
+            !$internal && \WP_CLI::log($sql);
+            $returnThis[] = $sql;
+        }
+        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables rename statements");
+        return $returnThis;
     }
 
     /**
@@ -246,18 +245,19 @@ class Orphan_Tables extends \WP_CLI_Command {
     public function list_folders(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
+        \WP_CLI::error("{$fxn}::Not implemented");
 
-        $tablenames = $this->get_renamed_tables();
-        if (\count($tablenames) < 1) {
-            \WP_CLI::error("No tables found");
-            return[];
-        }
-
-        foreach ($tablenames as &$tablename) {
-            \WP_CLI::log("{$tablename}");
-        }
-        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
-        return $tablenames;
+//        $tablenames = $this->get_renamed_tables();
+//        if (\count($tablenames) < 1) {
+//            \WP_CLI::error("No tables found");
+//            return[];
+//        }
+//
+//        foreach ($tablenames as &$tablename) {
+//            \WP_CLI::log("{$tablename}");
+//        }
+//        \WP_CLI::success(\count($tablenames) . " orphan tables renamed by this package");
+        return [];
     }
 
     /**
@@ -424,7 +424,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
             $result = $this->db->query($statement);
             // Table renames do not return a success result.
-            if (stripos($statement, 'RENAME TABLE ') !== false || $result) {
+            if (\stripos($statement, 'RENAME TABLE ') !== false || $result) {
                 $returnThis->changed++;
                 \WP_CLI::success("{$fxn}::\$statement={$statement}");
             } else {
@@ -490,6 +490,8 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         //These  blogs_ids represent actual multisite child blogs we will want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
+        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
+        
         //Gather the orphaned table names here.
         $orphan_tablenames = [];
 
