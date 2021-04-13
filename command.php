@@ -266,7 +266,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $results = $this->execute_statements($this->list_renames(), $limit, $dryrun);
 
-        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
@@ -301,7 +301,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $results = $this->execute_statements($this->list_drops(), $limit, $dryrun);
 
-        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
@@ -336,7 +336,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $results = $this->execute_statements($this->list_drop_renamed(), $limit, $dryrun);
 
-        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
