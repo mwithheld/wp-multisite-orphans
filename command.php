@@ -4,7 +4,6 @@ namespace mwithheld\Orphan_Tables\Commands;
 
 // Internal API ref https://make.wordpress.org/cli/handbook/references/internal-api/
 use WP_CLI;
-use WP_CLI\Utils;
 
 if (!defined('WP_CLI') || !class_exists('WP_CLI') || empty(WP_CLI)) {
     echo 'WP_CLI is not defined';
@@ -92,7 +91,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $items = $this->get_orphan_tables();
         if (\count($items) < 1) {
-            \WP_CLI::success("No tables found");
+            \WP_CLI::success('No tables found');
             return [];
         }
 
@@ -126,7 +125,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         $items = $this->get_orphan_tables();
         $returnThis = [];
         if (\count($items) < 1) {
-            !$internal && \WP_CLI::success("No tables found");
+            !$internal && \WP_CLI::success('No tables found');
             return $returnThis;
         }
 
@@ -161,7 +160,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         $items = $this->get_renamed_tables();
         $returnThis = [];
         if (\count($items) < 1) {
-            !$internal && \WP_CLI::success("No tables found");
+            !$internal && \WP_CLI::success('No tables found');
             return $returnThis;
         }
 
@@ -195,10 +194,12 @@ class Orphan_Tables extends \WP_CLI_Command {
         $items = $this->get_orphan_tables();
         $returnThis = [];
         if (\count($items) < 1) {
-            !$internal && \WP_CLI::success("No tables found");
+            !$internal && \WP_CLI::success('No tables found');
             return $returnThis;
         }
 
+        $tablename_new = '';
+        $sql = '';
         foreach ($items as &$i) {
             $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$i}"), "{$i}");
             $sql = "RENAME TABLE {$i} TO {$tablename_new};";
@@ -223,7 +224,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $items = $this->get_renamed_tables();
         if (\count($items) < 1) {
-            \WP_CLI::success("No tables found");
+            \WP_CLI::success('No tables found');
             return[];
         }
 
@@ -376,6 +377,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      */
     private function create_drop_statements(array $tablenames) {
         $returnThis = [];
+        $sql = '';
         foreach ($tablenames as &$t) {
             $sql = "DROP TABLE IF EXISTS {$t};";
             $returnThis[] = $sql;
@@ -412,6 +414,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             $statements_targeted = $statements;
         }
 
+        $result = false;
         foreach ($statements_targeted as &$statement) {
             //\WP_CLI::debug("{$fxn}::Looking at \$statement={$statement}");
             if ($dryrun) {
@@ -492,7 +495,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         $child_tablenames = $this->get_child_tablenames();
         \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($child_tablenames) . ' tables');
 
-        //These  blogs_ids represent actual multisite child blogs we will want to keep.
+        //These  blogs_ids represent actual multisite child blogs we want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
         \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
 
@@ -500,6 +503,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         $orphan_tablenames = [];
 
         //Search tables with name prefix containing non-existing blog IDs.
+        $table_blog_id = 0;
         foreach ($child_tablenames as &$t) {
             \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$t}");
             $table_blog_id = $this->get_number_from_table_name($t);
@@ -509,7 +513,7 @@ class Orphan_Tables extends \WP_CLI_Command {
                 continue;
             }
             if (!in_array($table_blog_id, $existing_blog_ids)) {
-                \WP_CLI::debug(__FUNCTION__ . "::\$t={$t} does not represent an existing blog");
+                \WP_CLI::debug(__FUNCTION__ . "::Table \$t={$t} does not represent an existing blog");
                 $orphan_tablenames[] = $t;
             }
         }
@@ -517,18 +521,6 @@ class Orphan_Tables extends \WP_CLI_Command {
         return $orphan_tablenames;
     }
 
-    /**
-     * Get a list of child site folders in wp-content/uploads/sites/<n> and wp-content/blogs.dir/<n>
-     * 
-     * @return array
-     */
-    private function get_child_folders():array {
-        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-        \WP_CLI::debug("{$fxn}::Started");
-        
-        die("Not implemented");
-    }
-    
     /**
      * Get a list of child site folders in wp-content/uploads/sites/<n> and wp-content/blogs.dir/<n> that do not belong to a WP blog.
      *
@@ -538,35 +530,32 @@ class Orphan_Tables extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $child_folders = $this->get_child_folders();
-        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($child_folders) . " child folders");
+        $targetdirs = [\wp_upload_dir()['basedir'], \wp_upload_dir()['basedir'] . DIRECTORY_SEPARATOR . 'sites'];
 
-        //These  blogs_ids represent actual multisite child blogs we will want to keep.
-        $existing_blog_ids = $this->get_existing_blog_ids();
-        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
+        foreach ($targetdirs as $targetdir) {
+            \WP_CLI::debug("Looking at upload dir={$targetdir}");
 
-        //Gather the orphaned table names here.
-        $orphan_tablenames = [];
+            //These  blogs_ids represent actual multisite child blogs we want to keep.
+            $existing_blog_ids = $this->get_existing_blog_ids();
+            \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
 
-        //Search tables with name prefix containing non-existing blog IDs.
-        foreach ($child_folders as &$f) {
-            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$child_folders={$f}");
-//            $table_blog_id = $this->get_number_from_table_name($f);
-//            \WP_CLI::debug(__FUNCTION__ . "::From \$tablename={$tablename} extracted \$table_blog_id={$table_blog_id}");
-//            if (empty($table_blog_id)) {
-//                \WP_CLI::debug(__FUNCTION__ . "::The \$tablename={$tablename} is not a multisite child site table");
-//                continue;
-//            }
-//            if (!in_array($table_blog_id, $existing_blog_ids)) {
-//                \WP_CLI::debug(__FUNCTION__ . "::\$table_name={$tablename} does not represent an existing blog");
-//                $orphan_tablenames[] = $tablename;
-//            }
+            //Gather the orphaned folder names here.
+            $orphan_folders = [];
+
+            $diritems = \scandir($targetdir);
+            $path = '';
+            foreach ($diritems as $i) {
+                \WP_CLI::debug("Looking at subfolder \$i={$i}");
+                if (\is_numeric($i) && in_array($i, $existing_blog_ids) && \is_dir($path = $targetdir . DIRECTORY_SEPARATOR . $i)) {
+                    \WP_CLI::debug(__FUNCTION__ . "::Folder {$path} does not represent an existing blog");
+                    $orphan_folders[] = $path;
+                }
+            }
         }
 
-        return $orphan_tablenames;
+        return $orphan_folders;
     }
-    
-    
+
     //==========================================================================
     // Utility methods not specific to this class.
     //==========================================================================
