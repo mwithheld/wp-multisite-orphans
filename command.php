@@ -376,8 +376,8 @@ class Orphan_Tables extends \WP_CLI_Command {
      */
     private function create_drop_statements(array $tablenames) {
         $returnThis = [];
-        foreach ($tablenames as &$tablename) {
-            $sql = "DROP TABLE IF EXISTS {$tablename};";
+        foreach ($tablenames as &$t) {
+            $sql = "DROP TABLE IF EXISTS {$t};";
             $returnThis[] = $sql;
         }
         return $returnThis;
@@ -500,17 +500,17 @@ class Orphan_Tables extends \WP_CLI_Command {
         $orphan_tablenames = [];
 
         //Search tables with name prefix containing non-existing blog IDs.
-        foreach ($child_tablenames as &$tablename) {
-            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$tablename}");
-            $table_blog_id = $this->get_number_from_table_name($tablename);
-            \WP_CLI::debug(__FUNCTION__ . "::From \$tablename={$tablename} extracted \$table_blog_id={$table_blog_id}");
+        foreach ($child_tablenames as &$t) {
+            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$t}");
+            $table_blog_id = $this->get_number_from_table_name($t);
+            \WP_CLI::debug(__FUNCTION__ . "::From \$t={$t} extracted \$table_blog_id={$table_blog_id}");
             if (empty($table_blog_id)) {
-                \WP_CLI::debug(__FUNCTION__ . "::The \$tablename={$tablename} is not a multisite child site table");
+                \WP_CLI::debug(__FUNCTION__ . "::The \$t={$t} is not a multisite child site table");
                 continue;
             }
             if (!in_array($table_blog_id, $existing_blog_ids)) {
-                \WP_CLI::debug(__FUNCTION__ . "::\$table_name={$tablename} does not represent an existing blog");
-                $orphan_tablenames[] = $tablename;
+                \WP_CLI::debug(__FUNCTION__ . "::\$t={$t} does not represent an existing blog");
+                $orphan_tablenames[] = $t;
             }
         }
 
@@ -549,9 +549,9 @@ class Orphan_Tables extends \WP_CLI_Command {
         $orphan_tablenames = [];
 
         //Search tables with name prefix containing non-existing blog IDs.
-        foreach ($child_folders as &$tablename) {
-            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$tablename}");
-//            $table_blog_id = $this->get_number_from_table_name($tablename);
+        foreach ($child_folders as &$f) {
+            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$child_folders={$f}");
+//            $table_blog_id = $this->get_number_from_table_name($f);
 //            \WP_CLI::debug(__FUNCTION__ . "::From \$tablename={$tablename} extracted \$table_blog_id={$table_blog_id}");
 //            if (empty($table_blog_id)) {
 //                \WP_CLI::debug(__FUNCTION__ . "::The \$tablename={$tablename} is not a multisite child site table");
