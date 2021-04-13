@@ -129,7 +129,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             !$internal && \WP_CLI::error("No tables found");
             return $returnThis;
         }
-        
+
         $returnThis = $this->create_drop_statements($tablenames);
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
@@ -164,7 +164,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             !$internal && \WP_CLI::error("No tables found");
             return $returnThis;
         }
-        
+
         $returnThis = $this->create_drop_statements($tablenames);
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
@@ -304,7 +304,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
-    
+
     /**
      * Drop tables that were renamed by this plugin.
      *
@@ -399,7 +399,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
             $result = $this->db->query($statement);
             // Table renames do not return a success result.
-            if (stripos($statement, 'RENAME TABLE ') || $result) {
+            if (stripos($statement, 'RENAME TABLE ') !== false || $result) {
                 $returnThis->changed++;
                 \WP_CLI::success("{$fxn}::\$statement={$statement}");
             } else {
