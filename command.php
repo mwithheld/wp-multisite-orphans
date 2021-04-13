@@ -1,6 +1,6 @@
 <?php
 
-namespace uvic\Orphan_Tables\Commands;
+namespace mwithheld\Orphan_Tables\Commands;
 
 // Internal API ref https://make.wordpress.org/cli/handbook/references/internal-api/
 use WP_CLI;
