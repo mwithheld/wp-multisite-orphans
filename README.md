@@ -12,12 +12,13 @@ wp-cli help orphan-tables
 wp-cli help orphan-tables list_drops
 wp-cli help orphan-tables rename_tables
 wp-cli help orphan-tables drop_tables
+wp-cli help list_drop_renamed
 
 wp-cli orphan-tables list_drops         Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_orphaned      Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_renamed       Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_renames       Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
-
+wp-cli list_drop_renamed                Prints drop statements for renamed tables; no changes are made. No parameters. 
 
 ### Renaming tables
 Rename orphaned tables with a standard label + hashed table name. 
@@ -35,6 +36,13 @@ wp-cli orphan-tables do_drops --limit=14 --debug --dry-run --yes
 * wp-cli orphan-tables do_drops --dry-run
 * wp-cli orphan-tables do_drops --limit=14
 
+### Dropping renamed tables
+Dry run of dropping the first 14 renamed tables alphabetically, showing debug output and skipping the confirmation prompt.
+wp-cli orphan-tables do_drop_renamed --limit=14 --debug --dry-run --yes
+
+* wp-cli orphan-tables do_drop_renamed
+* wp-cli orphan-tables do_drop_renamed --dry-run
+* wp-cli orphan-tables do_drop_renamed --limit=14
 
 ## Installing
 

@@ -129,11 +129,45 @@ class Orphan_Tables extends \WP_CLI_Command {
             !$internal && \WP_CLI::error("No tables found");
             return $returnThis;
         }
+        
+        $returnThis = $this->create_drop_statements($tablenames);
+        foreach ($returnThis as &$sql) {
+            !$internal && \WP_CLI::log($sql);
+        }
+        !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables drop statements");
+        return $returnThis;
+    }
 
-        foreach ($tablenames as &$tablename) {
-            $sql = "DROP TABLE IF EXISTS {$tablename};";
-            !$internal && \WP_CLI::log("$sql");
-            $returnThis[] = $sql;
+    /**
+     * Prints drop statements for renamed tables; no changes are made. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables list_drop_renamed
+     *
+     * @return void
+     */
+    public function list_drop_renamed(): array {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started");
+
+        $internal = false;
+        $caller = \array_slice(\debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2), 1, 1)[0];
+        //\WP_CLI::debug("{$fxn}::caller=".\print_r($caller, true));
+        if (isset($caller['class']) && !empty($caller['class']) && $caller['class'] == __CLASS__) {
+            $internal = true;
+            \WP_CLI::debug("{$fxn}::This is an interal function call");
+        }
+
+        $tablenames = $this->get_renamed_tables();
+        $returnThis = [];
+        if (\count($tablenames) < 1) {
+            !$internal && \WP_CLI::error("No tables found");
+            return $returnThis;
+        }
+        
+        $returnThis = $this->create_drop_statements($tablenames);
+        foreach ($returnThis as &$sql) {
+            !$internal && \WP_CLI::log($sql);
         }
         !$internal && \WP_CLI::success(\count($tablenames) . " orphan tables drop statements");
         return $returnThis;
@@ -232,7 +266,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $results = $this->execute_statements($this->list_renames(), $limit, $dryrun);
 
-        \WP_CLI::success("Total " . $results->changed + $results->failed . " orphan tables; Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
@@ -267,13 +301,63 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $results = $this->execute_statements($this->list_drops(), $limit, $dryrun);
 
-        \WP_CLI::success("Total " . $results->changed + $results->failed . " orphan tables; Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        return $results;
+    }
+    
+    /**
+     * Drop tables that were renamed by this plugin.
+     *
+     * ## PARAMETERS
+     *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
+     *      --dry-run Do not actually make any changes - just show what would be done.
+     *
+     * ## EXAMPLE
+     * wp-cli orphan-tables do_drop_renamed
+     * wp-cli orphan-tables do_drop_renamed --dry-run
+     * wp-cli orphan-tables do_drop_renamed --limit=2 --debug --dry-run --yes
+     *
+     * @param array $args Command-line arguments array from WP-CLI. Unused here.
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
+     *
+     * @return \stdClass Result tallies {changed=><int>, failed=><int>}
+     */
+    public function do_drop_renamed(array $args, array $assoc_args): \stdClass {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+
+        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
+
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
+
+        $results = $this->execute_statements($this->list_drop_renamed(), $limit, $dryrun);
+
+        \WP_CLI::success("Processed " . $results->changed + $results->failed . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
     //==========================================================================
     // Methods specific to this class.
     //==========================================================================
+
+    /**
+     * Create SQL drop statements for each of the list of table names.
+     * 
+     * @param array $tablenames Array of table names to create drop statements for, each name including the DB prefix.
+     * @return array List of SQL drop statements.
+     */
+    private function create_drop_statements(array $tablenames) {
+        $returnThis = [];
+        foreach ($tablenames as &$tablename) {
+            $sql = "DROP TABLE IF EXISTS {$tablename};";
+            $returnThis[] = $sql;
+        }
+        return $returnThis;
+    }
 
     /**
      * Execute the list of passed-in SQL statements.
