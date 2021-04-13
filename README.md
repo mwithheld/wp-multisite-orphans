@@ -8,10 +8,10 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 ## Using
 
 ### Get info
-help wp-cli orphan-tables
-help wp-cli orphan-tables list_drops
-help wp-cli orphan-tables rename_tables
-help wp-cli orphan-tables drop_tables
+wp-cli help orphan-tables
+wp-cli help orphan-tables list_drops
+wp-cli help orphan-tables rename_tables
+wp-cli help orphan-tables drop_tables
 
 wp-cli orphan-tables list_drops         Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
 wp-cli orphan-tables list_orphaned      Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
