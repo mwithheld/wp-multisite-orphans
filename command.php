@@ -10,14 +10,14 @@ if (!defined('WP_CLI') || !class_exists('WP_CLI') || empty(WP_CLI)) {
     return;
 }
 
-class Orphan_Tables extends \WP_CLI_Command {
+class WP_Multisite_Orphans extends \WP_CLI_Command {
 
     protected $db;
     private $_nl = "\n";
     private $_rename_label;
     private $_flags = [
-        'dryrun' => ["name" => 'dry-run', 'default' => false],
-        'limit'  => ["name" => 'limit', 'default' => 0],
+        'dryrun' => ['name' => 'dry-run', 'default' => false],
+        'limit'  => ['name' => 'limit', 'default' => 0],
     ];
 
     //==========================================================================
@@ -32,7 +32,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         \WP_CLI::debug("{$fxn}::Started");
 
         if (!is_multisite()) {
-            WP_CLI::error('This is not a multisite installation. This command is for multisite only.');
+            WP_CLI::error('This is not a WP Multisite installation. This command is for Multisite only.');
         }
 
         $this->db = $GLOBALS['wpdb'];
@@ -98,7 +98,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($items as &$i) {
             \WP_CLI::log("$i");
         }
-        \WP_CLI::success(\count($items) . " orphan tables names");
+        \WP_CLI::success(\count($items) . ' orphan tables names');
         return $items;
     }
 
@@ -133,7 +133,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
         }
-        !$internal && \WP_CLI::success(\count($items) . " orphan tables drop statements");
+        !$internal && \WP_CLI::success(\count($items) . ' orphan tables drop statements');
         return $returnThis;
     }
 
@@ -168,7 +168,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($returnThis as &$sql) {
             !$internal && \WP_CLI::log($sql);
         }
-        !$internal && \WP_CLI::success(\count($items) . " orphan tables drop statements");
+        !$internal && \WP_CLI::success(\count($items) . ' orphan tables drop statements');
         return $returnThis;
     }
 
@@ -206,7 +206,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             !$internal && \WP_CLI::log($sql);
             $returnThis[] = $sql;
         }
-        !$internal && \WP_CLI::success(\count($items) . " orphan tables rename statements");
+        !$internal && \WP_CLI::success(\count($items) . ' orphan tables rename statements');
         return $returnThis;
     }
 
@@ -231,7 +231,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($items as &$i) {
             \WP_CLI::log("{$i}");
         }
-        \WP_CLI::success(\count($items) . " orphan tables renamed by this package");
+        \WP_CLI::success(\count($items) . ' orphan tables renamed by this package');
         return $items;
     }
 
@@ -256,7 +256,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         foreach ($items as &$i) {
             \WP_CLI::log("{$i}");
         }
-        \WP_CLI::success(\count($items) . " orphaned folders");
+        \WP_CLI::success(\count($items) . ' orphaned folders');
         return $items;
     }
 
@@ -409,7 +409,7 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         if ($limit > 0) {
             $statements_targeted = \array_slice($statements, 0, $limit);
-            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($statements_targeted) . " \$statements");
+            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($statements_targeted) . ' $statements');
         } else {
             $statements_targeted = $statements;
         }
@@ -448,18 +448,18 @@ class Orphan_Tables extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $sql = "SELECT table_name "
-                . "FROM information_schema.tables "
+        $sql = 'SELECT table_name '
+                . 'FROM information_schema.tables '
                 . "WHERE table_schema='{$this->db->dbname}' "
                 . "AND table_name LIKE '{$this->db->prefix}{$this->_rename_label}%' "
-                . "ORDER BY table_name";
+                . 'ORDER BY table_name';
         \WP_CLI::debug("{$fxn}::About to run sql={$sql}");
 
         return $this->db->get_col($sql);
     }
 
     /**
-     * Get a list of integers representing existing multisite blog ids from the prefix_blogs table->blog_id field.
+     * Get a list of integers representing existing Multisite blog ids from the prefix_blogs table->blog_id field.
      *
      * @return array See the description.
      */
@@ -473,12 +473,12 @@ class Orphan_Tables extends \WP_CLI_Command {
      * @return array See the description.
      */
     private function get_child_tablenames() {
-        $sql = "SELECT table_name "
-                . "FROM information_schema.tables "
+        $sql = 'SELECT table_name '
+                . 'FROM information_schema.tables '
                 . "WHERE table_schema='{$this->db->dbname}' "
                 /* Restricting to 0-9 skips tables for the network-level */
                 . "AND table_name REGEXP '{$this->db->prefix}[0-9]+_' "
-                . "ORDER BY table_name";
+                . 'ORDER BY table_name';
         //\WP_CLI::debug("{$fxn}::About to run sql={$sql}");
         return $this->db->get_col($sql);
     }
@@ -495,7 +495,7 @@ class Orphan_Tables extends \WP_CLI_Command {
         $child_tablenames = $this->get_child_tablenames();
         \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($child_tablenames) . ' tables');
 
-        //These  blogs_ids represent actual multisite child blogs we want to keep.
+        //These  blogs_ids represent actual Multisite child blogs we want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
         \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
 
@@ -509,7 +509,7 @@ class Orphan_Tables extends \WP_CLI_Command {
             $table_blog_id = $this->get_number_from_table_name($t);
             \WP_CLI::debug(__FUNCTION__ . "::From \$t={$t} extracted \$table_blog_id={$table_blog_id}");
             if (empty($table_blog_id)) {
-                \WP_CLI::debug(__FUNCTION__ . "::The \$t={$t} is not a multisite child site table");
+                \WP_CLI::debug(__FUNCTION__ . "::The \$t={$t} is not a WP Multisite child site table");
                 continue;
             }
             if (!in_array($table_blog_id, $existing_blog_ids)) {
@@ -532,19 +532,20 @@ class Orphan_Tables extends \WP_CLI_Command {
 
         $targetdirs = [\wp_upload_dir()['basedir'], \wp_upload_dir()['basedir'] . DIRECTORY_SEPARATOR . 'sites'];
 
+        //Gather the orphaned folder names here.
+        $orphan_folders = [];
+
+        //These  blogs_ids represent actual Multisite child blogs we want to keep.
+        $existing_blog_ids = $this->get_existing_blog_ids();
+        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . ' $existing_blog_ids');
+
+        $path = null;
+        $diritems = null;
         foreach ($targetdirs as $targetdir) {
             \WP_CLI::debug("Looking at upload dir={$targetdir}");
 
-            //These  blogs_ids represent actual multisite child blogs we want to keep.
-            $existing_blog_ids = $this->get_existing_blog_ids();
-            \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
-
-            //Gather the orphaned folder names here.
-            $orphan_folders = [];
-
             $diritems = \scandir($targetdir);
-            $path = '';
-            foreach ($diritems as $i) {
+            foreach ($diritems as &$i) {
                 \WP_CLI::debug("Looking at subfolder \$i={$i}");
                 if (\is_numeric($i) && in_array($i, $existing_blog_ids) && \is_dir($path = $targetdir . DIRECTORY_SEPARATOR . $i)) {
                     \WP_CLI::debug(__FUNCTION__ . "::Folder {$path} does not represent an existing blog");
@@ -561,7 +562,7 @@ class Orphan_Tables extends \WP_CLI_Command {
     //==========================================================================
 
     /**
-     * Get the child site number from a WP multisite DB table name like wp_3682_options.
+     * Get the child site number from a WP Multisite DB table name like wp_3682_options.
      * If no such number is found, returns zero 0.
      *
      * @ref https://github.com/shawnhooper/delete-orphaned-multisite-tables/blob/master/wp-cli.php
@@ -575,4 +576,4 @@ class Orphan_Tables extends \WP_CLI_Command {
 
 }
 
-\WP_CLI::add_command('wp-multisite-orphans', __NAMESPACE__ . '\\Orphan_Tables');
+\WP_CLI::add_command('wp-multisite-orphans', __NAMESPACE__ . '\\WP_Multisite_Orphans');

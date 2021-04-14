@@ -1,9 +1,7 @@
 mwithheld/wp-multisite-orphans
 ==================
 
-When a WordPress Multisite child site is permanently deleted, WordPress does not delete the database tables or the site's user files folder. This tool helps clean those up.
-
-WP-CLI command for cleaning WordPress Multisite orpahned child tables and files.
+When a WordPress Multisite child site is permanently deleted, WordPress does not delete the database tables or the site's user files folder. This tool helps clean those up using [WP-CLI](https://wp-cli.org/)
 
 Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contributing) | [Support](#support)
 
