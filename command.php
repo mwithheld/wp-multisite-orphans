@@ -12,15 +12,15 @@ if (!defined('WP_CLI') || !class_exists('WP_CLI') || empty(WP_CLI)) {
 
 class WP_Multisite_Orphans extends \WP_CLI_Command {
 
+    //WP database, obtained from WP code ($GLOBALS['wpdb']).
     protected $db;
-    private $_nl = "\n";
     //WP-CLI flags used in this package.
-    private $_flags = [
+    private $flags = [
         'dryrun' => ['name' => 'dry-run', 'default' => false],
         'limit'  => ['name' => 'limit', 'default' => 0],
     ];
     //Label to use when we rename DB tables and the target parent dir.
-    private $_rename_label;
+    private $rename_label;
     //Source folders to look for orphaned folders in.  Must be below wp uploads dir.
     private $source_dirs = [];
     //Folder to move orphaned folders into.  Must be below wp uploads dir.
@@ -45,10 +45,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $this->db = $GLOBALS['wpdb'];
 
-        $this->_rename_label = \str_replace(__NAMESPACE__ . '\\', '', __CLASS__);
-        $this->_flags = (object) $this->_flags;
-        foreach ($this->_flags as $key => $value) {
-            $this->_flags->$key = (object) $value;
+        $this->rename_label = \str_replace(__NAMESPACE__ . '\\', '', __CLASS__);
+        $this->flags = (object) $this->flags;
+        foreach ($this->flags as $key => $value) {
+            $this->flags->$key = (object) $value;
         }
     }
 
@@ -62,16 +62,6 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
       \WP_CLI::debug("{$fxn}::Started");
       }
      */
-    /**
-     * ## OPTIONS
-     *
-     * <slug>
-     * : The internal name of the block.
-     */
-//    public function test() {
-//        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-//        \WP_CLI::debug("{$fxn}::Started");
-//    }
 
     /**
      * Prints the rename label. No parameters.
@@ -82,8 +72,8 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * @return void
      */
     public function show_label() {
-        \WP_CLI::success("$this->_rename_label");
-        return $this->_rename_label;
+        \WP_CLI::success("$this->rename_label");
+        return $this->rename_label;
     }
 
     /**
@@ -238,7 +228,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $tablename_new = '';
         $sql = '';
         foreach ($items as &$i) {
-            $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->_rename_label . '_' . \sha1("{$i}"), "{$i}");
+            $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->rename_label . '_' . \sha1("{$i}"), "{$i}");
             $sql = "RENAME TABLE {$i} TO {$tablename_new};";
             !$internal && \WP_CLI::log($sql);
             $returnThis[] = $sql;
@@ -345,10 +335,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
-        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
 
-        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $results = $this->execute_ddl($this->list_rename_tables(), $limit, $dryrun);
@@ -380,10 +370,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
-        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
 
-        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $results = $this->execute_ddl($this->list_drop_tables(), $limit, $dryrun);
@@ -415,10 +405,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
-        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
 
-        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $results = $this->execute_ddl($this->list_drop_renamed_tables(), $limit, $dryrun);
@@ -450,10 +440,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
-        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
 
-        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $results = $this->move_folders($this->get_orphan_folders(), $limit, $dryrun);
@@ -513,7 +503,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $result = false;
         foreach ($tables as &$t) {
-            //\WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
+            //\WP_CLI::debug("{$fxn}::Looking at \$i={$t}");
 
             if ($dryrun) {
                 $result = $this->db->query($t);
@@ -521,10 +511,10 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
             // Table renames do not return a success result.
             if ($dryrun || \stripos($t, 'RENAME TABLE ') !== false || $result) {
                 $returnThis->changed++;
-                \WP_CLI::success("{$fxn}::\$t={$t}");
+                \WP_CLI::success("{$fxn}::\$i={$t}");
             } else {
                 $returnThis->failed++;
-                \WP_CLI::warning("{$fxn}::\$t={$t}");
+                \WP_CLI::warning("{$fxn}::\$i={$t}");
             }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
@@ -544,7 +534,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $sql = 'SELECT table_name '
                 . 'FROM information_schema.tables '
                 . "WHERE table_schema='{$this->db->dbname}' "
-                . "AND table_name LIKE '{$this->db->prefix}{$this->_rename_label}%' "
+                . "AND table_name LIKE '{$this->db->prefix}{$this->rename_label}%' "
                 . 'ORDER BY table_name';
         \WP_CLI::debug("{$fxn}::About to run sql={$sql}");
 
@@ -586,11 +576,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         \WP_CLI::debug("{$fxn}::Started");
 
         $child_tablenames = $this->get_child_tablenames();
-        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($child_tablenames) . ' tables');
+        \WP_CLI::debug("{$fxn}::Found " . \count($child_tablenames) . ' tables');
 
         //These  blogs_ids represent actual Multisite child blogs we want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
-        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . " \$existing_blog_ids");
+        \WP_CLI::debug("{$fxn}::Found " . \count($existing_blog_ids) . " \$existing_blog_ids");
 
         //Gather the orphaned table names here.
         $orphan_tablenames = [];
@@ -598,15 +588,15 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         //Search tables with name prefix containing non-existing blog IDs.
         $table_blog_id = 0;
         foreach ($child_tablenames as &$t) {
-            \WP_CLI::debug(__FUNCTION__ . "::Looking at \$table_name={$t}");
+            \WP_CLI::debug("{$fxn}::Looking at \$table_name={$t}");
             $table_blog_id = $this->get_number_from_table_name($t);
-            \WP_CLI::debug(__FUNCTION__ . "::From \$t={$t} extracted \$table_blog_id={$table_blog_id}");
+            \WP_CLI::debug("{$fxn}::From \$i={$t} extracted \$table_blog_id={$table_blog_id}");
             if (empty($table_blog_id)) {
-                \WP_CLI::debug(__FUNCTION__ . "::The \$t={$t} is not a WP Multisite child site table");
+                \WP_CLI::debug("{$fxn}::The \$i={$t} is not a WP Multisite child site table");
                 continue;
             }
             if (!\in_array($table_blog_id, $existing_blog_ids)) {
-                \WP_CLI::debug(__FUNCTION__ . "::Table \$t={$t} does not represent an existing blog");
+                \WP_CLI::debug("{$fxn}::Table \$i={$t} does not represent an existing blog");
                 $orphan_tablenames[] = $t;
             }
         }
@@ -630,18 +620,18 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         //These  blogs_ids represent actual Multisite child blogs we want to keep.
         $existing_blog_ids = $this->get_existing_blog_ids();
-        \WP_CLI::debug(__FUNCTION__ . '::Found ' . \count($existing_blog_ids) . ' $existing_blog_ids');
+        \WP_CLI::debug("{$fxn}::Found " . \count($existing_blog_ids) . ' $existing_blog_ids');
 
         $path = null;
         $diritems = null;
-        foreach ($source_dirs as &$t) {
-            \WP_CLI::debug("Looking at upload dir={$t}");
+        foreach ($source_dirs as &$i) {
+            \WP_CLI::debug("{$fxn}::Looking at upload dir={$i}");
 
-            $diritems = \scandir($t);
+            $diritems = \scandir($i);
             foreach ($diritems as &$i) {
-                \WP_CLI::debug("Looking at subfolder \$i={$i}");
-                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $t . DIRECTORY_SEPARATOR . $i)) {
-                    \WP_CLI::debug(__FUNCTION__ . "::Folder {$path} does not represent an existing blog");
+                \WP_CLI::debug("{$fxn}::Looking at subfolder \$i={$i}");
+                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $i . DIRECTORY_SEPARATOR . $i)) {
+                    \WP_CLI::debug("{$fxn}::Folder={$path} does not represent an existing blog");
                     $orphan_folders[] = $path;
                 }
             }
@@ -708,22 +698,22 @@ EOF;
 
         $result = false;
         $wpuploadsdir = $this->get_wpuploads_dir();
-        foreach ($source_folders as &$t) {
-            \WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
+        foreach ($source_folders as &$i) {
+            \WP_CLI::debug("{$fxn}::Looking at \$i={$i}");
 
             switch (true) {
-                case (\realpath($t) == \realpath($wpuploadsdir)):
+                case (\realpath($i) == \realpath($wpuploadsdir)):
                     //The path must not be the wp_uploads folder itself.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
                     continue 2;
-                case(\stripos(dirname($t), $wpuploadsdir . DIRECTORY_SEPARATOR) === false):
+                case(\stripos(dirname($i), $wpuploadsdir . DIRECTORY_SEPARATOR) === false):
                     //Security: The orphaned folder path must be under the WP uploads dir.
-                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the wp uploads folder={$wpuploadsdir}");
+                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($i) . "is not under the wp uploads folder={$wpuploadsdir}");
                     continue 2;
             }
 
             //Build the target location relative to the target base dir.
-            $target_relativedir = \str_replace($wpuploadsdir . DIRECTORY_SEPARATOR, '', $t);
+            $target_relativedir = $this->get_path_relative_to_uploads($i);
             \WP_CLI::debug("{$fxn}::Built \$target_relativedir={$target_relativedir}");
             $target_new_subparentdir = \dirname($target_new_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
             \WP_CLI::debug("{$fxn}::Built \$target_new_subdir={$target_new_subparentdir}");
@@ -735,22 +725,22 @@ EOF;
             \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_new_basedir}");
 
             //Security: The final built destination path must be under the $target_new_basedir path.
-            if (\stripos(dirname($t), $target_new_basedir . DIRECTORY_SEPARATOR) === false) {
-                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the package-labelled folder={$target_new_basedir}");
+            if (\stripos(dirname($i), $target_new_basedir . DIRECTORY_SEPARATOR) === false) {
+                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($i) . "is not under the package-labelled folder={$target_new_basedir}");
                 continue;
             }
 
             //Move the folders.
-            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($t);
+            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($i);
             if (!$dryrun) {
-                $result = rename($t, $target_new_path);
+                $result = rename($i, $target_new_path);
             }
             if ($dryrun || $result) {
                 $returnThis->changed++;
-                \WP_CLI::success("{$fxn}::Moved {$t} to {$target_new_path}");
+                \WP_CLI::success("{$fxn}::Moved {$i} to {$target_new_path}");
             } else {
                 $returnThis->failed++;
-                \WP_CLI::warning("{$fxn}::Failed to move {$t} to {$target_new_path}");
+                \WP_CLI::warning("{$fxn}::Failed to move {$i} to {$target_new_path}");
             }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
@@ -766,20 +756,18 @@ EOF;
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $targetdirs = $this->get_target_dir();
+        $targetdir = $this->get_target_dir();
+        \WP_CLI::debug("{$fxn}::Got \$targetdirs={$targetdirs}");
         $orphan_folders = [];
 
-        foreach ($targetdirs as &$t) {
-            \WP_CLI::debug("Looking at upload dir={$t}");
-
-            $diritems = \scandir($t);
-            foreach ($diritems as &$i) {
-                \WP_CLI::debug("Looking at subfolder \$i={$i}");
-                if (\is_numeric($i) && \is_dir($path = $t . DIRECTORY_SEPARATOR . $i)) {
-                    \WP_CLI::debug(__FUNCTION__ . "::Found renamed folder={$path}");
-                    $orphan_folders[] = $i;
-                }
-            }
+        $diritems = \scandir($targetdir);
+        foreach ($diritems as &$i) {
+            \WP_CLI::debug("{$fxn}::Looking at subfolder={$i}");
+            \WP_CLI::error('Not implemented');
+//            if (\is_dir($i)) {
+//                \WP_CLI::debug("{$fxn}::Found moved folder={$path}");
+//                $orphan_folders[] = $i;
+//            }
         }
 
         return $orphan_folders;
@@ -795,7 +783,7 @@ EOF;
 
     private function get_target_dir() {
         if (empty($this->target_dir)) {
-            $this->target_dir = $this->get_wpuploads_dir() . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
+            $this->target_dir = $this->get_wpuploads_dir() . DIRECTORY_SEPARATOR . $this->rename_label;
         }
         return $this->target_dir;
     }
@@ -808,6 +796,10 @@ EOF;
             $this->wpuploadsdir = \wp_upload_dir()['basedir'];
         }
         return $this->wpuploadsdir;
+    }
+
+    private function get_path_relative_to_uploads(string $folder): string {
+        return \str_replace($folder . DIRECTORY_SEPARATOR, '');
     }
 
     //==========================================================================
