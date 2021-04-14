@@ -1,8 +1,8 @@
 {
-    "name": "mwithheld/orphan-tables",
+    "name": "mwithheld/wp-multisite-orphans",
     "description": "WP-CLI command for cleaning orphan tables on Wordpress Multisite installations. List, generate drop statements, or drop orphan tables",
     "type": "wp-cli-package",
-    "homepage": "https://github.com/mwithheld/orphan-tables",
+    "homepage": "https://github.com/mwithheld/wp-multisite-orphans",
     "license": "MIT",
     "authors": [],
     "minimum-stability": "dev",

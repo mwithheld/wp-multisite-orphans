@@ -68,7 +68,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints the rename label; no changes are made. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables get_label
+     * wp-cli wp-multisite-orphans get_label
      *
      * @return void
      */
@@ -81,7 +81,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_orphaned
+     * wp-cli wp-multisite-orphans list_orphaned
      *
      * @return void
      */
@@ -106,7 +106,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_drops
+     * wp-cli wp-multisite-orphans list_drops
      *
      * @return void
      */
@@ -141,7 +141,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints drop statements for renamed tables; no changes are made. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_drop_renamed
+     * wp-cli wp-multisite-orphans list_drop_renamed
      *
      * @return void
      */
@@ -176,7 +176,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_renames
+     * wp-cli wp-multisite-orphans list_renames
      *
      * @return void
      */
@@ -214,7 +214,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_renamed
+     * wp-cli wp-multisite-orphans list_renamed
      *
      * @return void
      */
@@ -239,7 +239,7 @@ class Orphan_Tables extends \WP_CLI_Command {
      * Prints a list of orphaned folders in wp-content/uploads/sites/<n> and wp-content/blogs.dir/<n>. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables list_folders
+     * wp-cli wp-multisite-orphans list_folders
      *
      * @return void
      */
@@ -268,9 +268,9 @@ class Orphan_Tables extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables do_renames
-     * wp-cli orphan-tables do_renames --dry-run
-     * wp-cli orphan-tables do_renames --limit=1 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_renames
+     * wp-cli wp-multisite-orphans do_renames --dry-run
+     * wp-cli wp-multisite-orphans do_renames --limit=1 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
@@ -303,9 +303,9 @@ class Orphan_Tables extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables do_drops
-     * wp-cli orphan-tables do_drops --dry-run
-     * wp-cli orphan-tables do_drops --limit=14 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_drops
+     * wp-cli wp-multisite-orphans do_drops --dry-run
+     * wp-cli wp-multisite-orphans do_drops --limit=14 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
@@ -338,9 +338,9 @@ class Orphan_Tables extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli orphan-tables do_drop_renamed
-     * wp-cli orphan-tables do_drop_renamed --dry-run
-     * wp-cli orphan-tables do_drop_renamed --limit=2 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_drop_renamed
+     * wp-cli wp-multisite-orphans do_drop_renamed --dry-run
+     * wp-cli wp-multisite-orphans do_drop_renamed --limit=2 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
@@ -575,4 +575,4 @@ class Orphan_Tables extends \WP_CLI_Command {
 
 }
 
-\WP_CLI::add_command('orphan-tables', __NAMESPACE__ . '\\Orphan_Tables');
+\WP_CLI::add_command('wp-multisite-orphans', __NAMESPACE__ . '\\Orphan_Tables');
