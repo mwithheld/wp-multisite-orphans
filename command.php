@@ -81,11 +81,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans list_orphaned
+     * wp-cli wp-multisite-orphans list_tables
      *
      * @return void
      */
-    public function list_orphaned(): array {
+    public function list_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
@@ -106,11 +106,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans list_drops
+     * wp-cli wp-multisite-orphans list_drop_tables
      *
      * @return void
      */
-    public function list_drops(): array {
+    public function list_drop_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
@@ -141,11 +141,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints drop statements for renamed tables; no changes are made. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans list_drop_renamed
+     * wp-cli wp-multisite-orphans list_drop_renamed_tables
      *
      * @return void
      */
-    public function list_drop_renamed(): array {
+    public function list_drop_renamed_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
@@ -176,11 +176,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans list_renames
+     * wp-cli wp-multisite-orphans list_rename_tables
      *
      * @return void
      */
-    public function list_renames(): array {
+    public function list_rename_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
         $internal = false;
@@ -214,11 +214,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans list_renamed
+     * wp-cli wp-multisite-orphans list_already_renamed_tables
      *
      * @return void
      */
-    public function list_renamed(): array {
+    public function list_already_renamed_tables(): array {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
@@ -268,16 +268,16 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans do_renames
-     * wp-cli wp-multisite-orphans do_renames --dry-run
-     * wp-cli wp-multisite-orphans do_renames --limit=1 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_rename_tables
+     * wp-cli wp-multisite-orphans do_rename_tables --dry-run
+     * wp-cli wp-multisite-orphans do_rename_tables --limit=1 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
      *
      * @return object {changed=><int>, failed=><int>}
      */
-    public function do_renames(array $args, array $assoc_args): \stdClass {
+    public function do_rename_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
@@ -289,7 +289,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
-        $results = $this->execute_ddl($this->list_renames(), $limit, $dryrun);
+        $results = $this->execute_ddl($this->list_rename_tables(), $limit, $dryrun);
 
         \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
@@ -303,16 +303,16 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans do_drops
-     * wp-cli wp-multisite-orphans do_drops --dry-run
-     * wp-cli wp-multisite-orphans do_drops --limit=14 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_drop_tables
+     * wp-cli wp-multisite-orphans do_drop_tables --dry-run
+     * wp-cli wp-multisite-orphans do_drop_tables --limit=14 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
      *
      * @return \stdClass Result tallies {changed=><int>, failed=><int>}
      */
-    public function do_drops(array $args, array $assoc_args): \stdClass {
+    public function do_drop_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
@@ -324,7 +324,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
-        $results = $this->execute_ddl($this->list_drops(), $limit, $dryrun);
+        $results = $this->execute_ddl($this->list_drop_tables(), $limit, $dryrun);
 
         \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
@@ -338,16 +338,16 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans do_drop_renamed
-     * wp-cli wp-multisite-orphans do_drop_renamed --dry-run
-     * wp-cli wp-multisite-orphans do_drop_renamed --limit=2 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables --dry-run
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=2 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
      *
      * @return \stdClass Result tallies {changed=><int>, failed=><int>}
      */
-    public function do_drop_renamed(array $args, array $assoc_args): \stdClass {
+    public function do_drop_renamed_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
@@ -359,12 +359,48 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
-        $results = $this->execute_ddl($this->list_drop_renamed(), $limit, $dryrun);
+        $results = $this->execute_ddl($this->list_drop_renamed_tables(), $limit, $dryrun);
 
         \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
 
+    /**
+     * Move orpahned folders into a wp uploads folder named for this plugin.
+     *
+     * ## PARAMETERS
+     *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
+     *      --dry-run Do not actually make any changes - just show what would be done.
+     *
+     * ## EXAMPLE
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables --dry-run
+     * wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=2 --debug --dry-run --yes
+     *
+     * @param array $args Command-line arguments array from WP-CLI. Unused here.
+     * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
+     *
+     * @return \stdClass Result tallies {changed=><int>, failed=><int>}
+     */
+    public function do_move_folders(array $args, array $assoc_args): \stdClass {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+
+        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+
+        $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
+        $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
+
+        $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
+        $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
+
+        $results = $this->execute_ddl($this->list_drop_renamed_tables(), $limit, $dryrun);
+
+        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        return $results;
+    }
+    
+    
     //==========================================================================
     // Methods specific to this class.
     //==========================================================================
@@ -389,7 +425,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Execute the list of passed-in SQL statements.
      * E.g. To rename each of the tables passed in with a standard label + hashed table name.
      *
-     * @param array $statements SQL RENAME TABLE commands e.g. from list_renamed().
+     * @param array $statements SQL RENAME TABLE commands e.g. from list_already_renamed_tables().
      * @param int $limit Only attempt rename on this number of tables (when sorted alphabetically ASC).
      * @param bool $dryrun True to not actually run the queries, just print them.
      * @return \stdClass Result tallies {changed=><int>, failed=><int>}

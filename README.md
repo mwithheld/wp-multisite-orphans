@@ -13,51 +13,51 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 |Command|Help|
 |--- | --- |
 |`wp-cli help wp-multisite-orphans`|Shows help for the wp-multisite-orphans package|
-|`wp-cli help wp-multisite-orphans list_drop_renamed`|Shows help for the list_drop_renamed sub-command|
+|`wp-cli help wp-multisite-orphans ;ist_tables`|Shows help for the list_tables sub-command|
 |`wp-cli help wp-multisite-orphans [sub-command]`|Shows help for this sub-command|
 
 ### Get info
 
 |Command|Help|
 --- | --- |
-|`wp-cli wp-multisite-orphans list_drop_renamed`|Prints drop statements for renamed tables; no changes are made. No parameters.|
-|`wp-cli wp-multisite-orphans list_drops`|Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
-|`wp-cli wp-multisite-orphans list_orphaned`|Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
-|`wp-cli wp-multisite-orphans list_renamed`|Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. Note the sub-command ends with a **d**. No parameters.|
-|`wp-cli wp-multisite-orphans list_renames`|Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. Note the sub-command ends with an **s**. No parameters.|
 
 ### Rename tables
+|`wp-cli wp-multisite-orphans list_already_renamed_tables`|Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_drop_renamed_tables`|Prints drop statements for renamed tables; no changes are made. No parameters.|
+|`wp-cli wp-multisite-orphans list_drop_tables`|Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_rename_tables`|Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_tables`|Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
 Rename orphaned tables with a standard label + hashed table name (after a confirmation prompt).
 
-    wp-cli wp-multisite-orphans do_renames --limit=1
+    wp-cli wp-multisite-orphans do_rename_tables --limit=1
 
 Other examples of this command:
 
-* `wp-cli wp-multisite-orphans do_renames`
-* `wp-cli wp-multisite-orphans do_renames --dry-run`
-* `wp-cli wp-multisite-orphans do_renames --limit=1 --debug --dry-run --yes`
+* `wp-cli wp-multisite-orphans do_rename_tables`
+* `wp-cli wp-multisite-orphans do_rename_tables --dry-run`
+* `wp-cli wp-multisite-orphans do_rename_tables --limit=1 --debug --dry-run --yes`
 
 ### Drop tables
 Dry run of dropping the first 14 tables alphabetically, showing debug output and skipping the confirmation prompt.
 
-    wp-cli wp-multisite-orphans do_drops --limit=14 --debug --dry-run --yes
+    wp-cli wp-multisite-orphans do_drop_tables --limit=14 --debug --dry-run --yes
 
 Other examples of this command:
 
-* `wp-cli wp-multisite-orphans do_drops`
-* `wp-cli wp-multisite-orphans do_drops --dry-run`
-* `wp-cli wp-multisite-orphans do_drops --limit=14`
+* `wp-cli wp-multisite-orphans do_drop_tables`
+* `wp-cli wp-multisite-orphans do_drop_tables --dry-run`
+* `wp-cli wp-multisite-orphans do_drop_tables --limit=14`
 
 ### Drop renamed tables
 Drop the first 10 renamed tables alphabetically (after a confirmation prompt).
 
-    wp-cli wp-multisite-orphans do_drop_renamed --limit=10
+    wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=10
 
 Other examples of this command:
 
-* `wp-cli wp-multisite-orphans do_drop_renamed`
-* `wp-cli wp-multisite-orphans do_drop_renamed --dry-run`
-* `wp-cli wp-multisite-orphans do_drop_renamed --limit=14 --debug --dry-run --yes`
+* `wp-cli wp-multisite-orphans do_drop_renamed_tables`
+* `wp-cli wp-multisite-orphans do_drop_renamed_tables --dry-run`
+* `wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=14 --debug --dry-run --yes`
 
 
 ## Installing
