@@ -19,6 +19,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         'dryrun' => ['name' => 'dry-run', 'default' => false],
         'limit'  => ['name' => 'limit', 'default' => 0],
     ];
+    private $wpuploadsdir = '';
 
     //==========================================================================
     // Methods that provide a user-accessible interface for this package.
@@ -36,6 +37,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         $this->db = $GLOBALS['wpdb'];
+
         $this->_rename_label = \str_replace(__NAMESPACE__ . '\\', '', __CLASS__);
         $this->_flags = (object) $this->_flags;
         foreach ($this->_flags as $key => $value) {
@@ -281,7 +283,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
-        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+        \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
         $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
@@ -373,9 +375,9 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      *      --dry-run Do not actually make any changes - just show what would be done.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans do_drop_renamed_tables
-     * wp-cli wp-multisite-orphans do_drop_renamed_tables --dry-run
-     * wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=2 --debug --dry-run --yes
+     * wp-cli wp-multisite-orphans do_move_folders
+     * wp-cli wp-multisite-orphans do_move_folders --dry-run
+     * wp-cli wp-multisite-orphans do_move_folders --limit=2 --debug --dry-run --yes
      *
      * @param array $args Command-line arguments array from WP-CLI. Unused here.
      * @param array $assoc_args Command line flags from WP-CLI. Flags specifically used by this package:
@@ -386,7 +388,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
 
-        \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
+        \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
         $dryrun = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->dryrun->name, false);
         $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
@@ -394,13 +396,12 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $limit = \WP_CLI\Utils\get_flag_value($assoc_args, $this->_flags->limit->name, 0);
         $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
-        $results = $this->execute_ddl($this->list_drop_renamed_tables(), $limit, $dryrun);
+        $results = $this->move_folders($this->get_orphan_folders(), $limit, $dryrun);
 
-        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " tables: Changed={$results->changed}; Failed={$results->failed}");
+        \WP_CLI::success("Processed " . ($results->changed + $results->failed) . " folders: Changed={$results->changed}; Failed={$results->failed}");
         return $results;
     }
-    
-    
+
     //==========================================================================
     // Methods specific to this class.
     //==========================================================================
@@ -444,30 +445,30 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         if ($limit > 0) {
-            $statements_targeted = \array_slice($statements, 0, $limit);
-            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($statements_targeted) . ' $statements');
+            $targets = \array_slice($statements, 0, $limit);
+            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($targets) . ' $statements');
         } else {
-            $statements_targeted = $statements;
+            $targets = $statements;
         }
 
         $result = false;
-        foreach ($statements_targeted as &$statement) {
-            //\WP_CLI::debug("{$fxn}::Looking at \$statement={$statement}");
+        foreach ($targets as &$t) {
+            //\WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
             if ($dryrun) {
                 $result = false;
                 $returnThis->failed++;
-                \WP_CLI::success("{$fxn}::Dry run: \$statement={$statement}");
+                \WP_CLI::success("(Dry run) {$t}");
                 continue;
             }
 
-            $result = $this->db->query($statement);
+            $result = $this->db->query($t);
             // Table renames do not return a success result.
-            if (\stripos($statement, 'RENAME TABLE ') !== false || $result) {
+            if (\stripos($t, 'RENAME TABLE ') !== false || $result) {
                 $returnThis->changed++;
-                \WP_CLI::success("{$fxn}::\$statement={$statement}");
+                \WP_CLI::success("{$fxn}::\$t={$t}");
             } else {
                 $returnThis->failed++;
-                \WP_CLI::error("{$fxn}::\$statement={$statement}");
+                \WP_CLI::warning("{$fxn}::\$t={$t}");
             }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
@@ -548,7 +549,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
                 \WP_CLI::debug(__FUNCTION__ . "::The \$t={$t} is not a WP Multisite child site table");
                 continue;
             }
-            if (!in_array($table_blog_id, $existing_blog_ids)) {
+            if (!\in_array($table_blog_id, $existing_blog_ids)) {
                 \WP_CLI::debug(__FUNCTION__ . "::Table \$t={$t} does not represent an existing blog");
                 $orphan_tablenames[] = $t;
             }
@@ -566,7 +567,8 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $targetdirs = [\wp_upload_dir()['basedir'], \wp_upload_dir()['basedir'] . DIRECTORY_SEPARATOR . 'sites'];
+        $wpuploadsdir = $this->get_wpuploads_dir();
+        $targetdirs = [$wpuploadsdir, $wpuploadsdir . DIRECTORY_SEPARATOR . 'sites'];
 
         //Gather the orphaned folder names here.
         $orphan_folders = [];
@@ -583,7 +585,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
             $diritems = \scandir($targetdir);
             foreach ($diritems as &$i) {
                 \WP_CLI::debug("Looking at subfolder \$i={$i}");
-                if (\is_numeric($i) && in_array($i, $existing_blog_ids) && \is_dir($path = $targetdir . DIRECTORY_SEPARATOR . $i)) {
+                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $targetdir . DIRECTORY_SEPARATOR . $i)) {
                     \WP_CLI::debug(__FUNCTION__ . "::Folder {$path} does not represent an existing blog");
                     $orphan_folders[] = $path;
                 }
@@ -593,9 +595,149 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         return $orphan_folders;
     }
 
+    /**
+     * Execute the list of passed-in SQL statements.
+     * E.g. To rename each of the tables passed in with a standard label + hashed table name.
+     *
+     * @param array $folders Full paths of files/folders to move.
+     * @param int $limit Only attempt rename on this number of tables (when sorted alphabetically ASC).
+     * @param bool $dryrun True to not actually run the queries, just print them.
+     * @return \stdClass Result tallies {changed=><int>, failed=><int>}
+     */
+    private function move_folders(array $folders, int $limit = 0, bool $dryrun = false): \stdClass {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started with " . \count($folders) . " folders; \$limit={$limit}; \$dryrun={$dryrun}");
+
+        $dryrun && \WP_CLI::debug("{$fxn}::Dry run, so do not actually make any changes");
+        $limit && \WP_CLI::debug("{$fxn}::Limiting to {$limit} tables");
+
+        $returnThis = (object) ['changed' => 0, 'failed' => 0];
+        if (empty($folders) || $limit < 0) {
+            \WP_CLI::debug("{$fxn}::No statements or invalid limit");
+            return $returnThis;
+        }
+
+        if ($limit > 0) {
+            $targets = \array_slice($folders, 0, $limit);
+            \WP_CLI::debug("{$fxn}::Cut folders down to " . \count($targets) . ' $folders');
+        } else {
+            $targets = $folders;
+        }
+
+        // Where to put all the moved folders.
+        $wpuploadsdir = $this->get_wpuploads_dir();
+        $target_basedir = $wpuploadsdir . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
+        \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_basedir}");
+
+        if (!$this->dir_present_writable($target_basedir)) {
+            \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
+        }
+        \WP_CLI::success("{$fxn}::Created directory {$target_basedir}");
+
+        $htaccess_location = $target_basedir . DIRECTORY_SEPARATOR . '.htaccess';
+        if (!file_exists($htaccess_location)) {
+            $htaccess_content = <<<EOF
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+EOF;
+            $success = file_put_contents($htaccess_location, $htaccess_content);
+            if (!$success) {
+                \WP_CLI::error("{$fxn}::Failed to create .htaccess file in {$htaccess_location}");
+            }
+        }
+
+        $result = false;
+        foreach ($targets as &$t) {
+            \WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
+
+            switch (true) {
+                case (realpath($t) == realpath($wpuploadsdir)):
+                    //The path must not be the wp_uploads folder itself.
+                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
+                    continue 2;
+                case(\stripos(dirname($t), $wpuploadsdir) === false):
+                    //Security: the path must be under the WP uploads dir.
+                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the wp uploads folder={$wpuploadsdir}");
+                    continue 2;
+                case($dryrun):
+                    $result = false;
+                    $returnThis->failed++;
+                    \WP_CLI::success("(Dry run) Move \$t={$t} to ");
+                    continue 2;
+            }
+
+            //Get the target location relative to the base dir.
+            $target_relativedir = str_replace($wpuploadsdir . DIRECTORY_SEPARATOR, '', $t);
+            \WP_CLI::debug("{$fxn}::Built \$target_relativedir={$target_relativedir}");
+            $target_new_subparentdir = dirname($target_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
+            \WP_CLI::debug("{$fxn}::Built \$target_new_subdir={$target_new_subparentdir}");
+
+            //Re-create the wp_uploads folder structure in this plugin's labelled dir.
+            if (!$this->dir_present_writable($target_new_subparentdir)) {
+                \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
+            }
+            \WP_CLI::success("{$fxn}::Created directory {$target_basedir}");
+
+            //Move target folders.
+//            //            $result = rename($t, $target_relativedir.DIRECTORY_SEPARATOR.basename($t));
+//            if ($result) {
+//                $returnThis->changed++;
+//                \WP_CLI::success("{$fxn}::\$t={$t}");
+//            } else {
+//                $returnThis->failed++;
+//                \WP_CLI::warning("{$fxn}::\$t={$t}");
+//            }
+            //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
+        }
+        return $returnThis;
+    }
+
+    //==========================================================================
+    // Utility methods specific to WordPress
+    //==========================================================================
+    private function get_wpuploads_dir(): string {
+        if (empty($this->wpuploadsdir)) {
+            $this->wpuploadsdir = \wp_upload_dir()['basedir'];
+        }
+        return $this->wpuploadsdir;
+    }
+
     //==========================================================================
     // Utility methods not specific to this class.
     //==========================================================================
+
+    private function dir_present_writable(string $dir_to_check, $perms = 0755): bool {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started with \$dir_to_check={$dir_to_check}; \$perms={$perms}");
+
+        $success = true;
+
+        if (\is_file($dir_to_check)) {
+            \WP_CLI::debug("{$fxn}::is_file=true for \$dir_to_check={$dir_to_check}; \$perms={$perms}");
+            throw new InvalidArgumentException("Cannot create a directory overwriting an existing file {$dir_to_check}");
+        }
+        if (!\is_dir($dir_to_check)) {
+            \WP_CLI::debug("{$fxn}::is_dir=false for \$dir_to_check={$dir_to_check}, so try to make it");
+            $success = mkdir($dir_to_check, $perms);
+            \WP_CLI::debug("{$fxn}::mkdir={$success} for \$dir_to_check={$dir_to_check}");
+            if (!$success) {
+                return false;
+            }
+        }
+        if (!\is_writable($dir_to_check)) {
+            \WP_CLI::debug("{$fxn}::is_writable={$success} for \$dir_to_check={$dir_to_check}, so try to chmod");
+            $success = chmod($dir_to_check, $perms);
+            \WP_CLI::debug("{$fxn}::chmod={$success} for \$dir_to_check={$dir_to_check}");
+        }
+
+        \WP_CLI::debug("{$fxn}::About to return \$success={$success}");
+        return $success;
+    }
 
     /**
      * Get the child site number from a WP Multisite DB table name like wp_3682_options.
