@@ -13,20 +13,26 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 |Command|Help|
 |--- | --- |
 |`wp-cli help wp-multisite-orphans`|Shows help for the wp-multisite-orphans package|
-|`wp-cli help wp-multisite-orphans ;ist_tables`|Shows help for the list_tables sub-command|
+|`wp-cli help wp-multisite-orphans list_tables`|Shows help for the list_tables sub-command|
 |`wp-cli help wp-multisite-orphans [sub-command]`|Shows help for this sub-command|
 
 ### Get info
 
 |Command|Help|
---- | --- |
-
-### Rename tables
+|--- | --- |
 |`wp-cli wp-multisite-orphans list_already_renamed_tables`|Prints a list of orphaned tables renamed by this package; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
 |`wp-cli wp-multisite-orphans list_drop_renamed_tables`|Prints drop statements for renamed tables; no changes are made. No parameters.|
 |`wp-cli wp-multisite-orphans list_drop_tables`|Prints drop statements for orphan tables; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
-|`wp-cli wp-multisite-orphans list_rename_tables`|Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
-|`wp-cli wp-multisite-orphans list_tables`|Prints orphan table names in plain text; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_folders`|Prints rename statements for orphan tables using the standard label {show_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_moved_folders`|Prints a list of orphaned folders that were moved by this package. No parameters.|
+|`wp-cli wp-multisite-orphans list_rename_tables`|Prints rename statements for orphan tables using the standard label {show_label}. No changes are made. Renamed tables do not show up as orphaned tables. No parameters.|
+|`wp-cli wp-multisite-orphans list_tables`|Prints orphan table names in plain text. Renamed tables do not show up as orphaned tables. No parameters.|
+|--- | --- |
+|`wp-cli wp-multisite-orphans show_label`|Prints the rename label. No parameters.|
+|`wp-cli wp-multisite-orphans show_source_dir`|Prints the folders we look into for orphaned folders. No parameters.|
+|`wp-cli wp-multisite-orphans show_target_dir`|Prints the destination directory when we move orphaned folders. No parameters.|
+
+### Rename orphaned tables
 Rename orphaned tables with a standard label + hashed table name (after a confirmation prompt).
 
     wp-cli wp-multisite-orphans do_rename_tables --limit=1
@@ -37,7 +43,7 @@ Other examples of this command:
 * `wp-cli wp-multisite-orphans do_rename_tables --dry-run`
 * `wp-cli wp-multisite-orphans do_rename_tables --limit=1 --debug --dry-run --yes`
 
-### Drop tables
+### Drop orphaned tables
 Dry run of dropping the first 14 tables alphabetically, showing debug output and skipping the confirmation prompt.
 
     wp-cli wp-multisite-orphans do_drop_tables --limit=14 --debug --dry-run --yes
@@ -58,6 +64,11 @@ Other examples of this command:
 * `wp-cli wp-multisite-orphans do_drop_renamed_tables`
 * `wp-cli wp-multisite-orphans do_drop_renamed_tables --dry-run`
 * `wp-cli wp-multisite-orphans do_drop_renamed_tables --limit=14 --debug --dry-run --yes`
+
+### Move orphaned folders
+Move the first 3 orphaned folders into a wp uploads folder named for this package (after a confirmation prompt).
+
+    wp-cli wp-multisite-orphans do_move_folders --limit=3
 
 
 ## Installing

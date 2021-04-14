@@ -14,11 +14,18 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
     protected $db;
     private $_nl = "\n";
-    private $_rename_label;
+    //WP-CLI flags used in this package.
     private $_flags = [
         'dryrun' => ['name' => 'dry-run', 'default' => false],
         'limit'  => ['name' => 'limit', 'default' => 0],
     ];
+    //Label to use when we rename DB tables and the target parent dir.
+    private $_rename_label;
+    //Source folders to look for orphaned folders in.  Must be below wp uploads dir.
+    private $source_dirs = [];
+    //Folder to move orphaned folders into.  Must be below wp uploads dir.
+    private $target_dir = '';
+    //WP uploads folder path from WP.
     private $wpuploadsdir = '';
 
     //==========================================================================
@@ -67,16 +74,44 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 //    }
 
     /**
-     * Prints the rename label; no changes are made. No parameters.
+     * Prints the rename label. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans get_label
+     * wp-cli wp-multisite-orphans show_label
      *
      * @return void
      */
-    public function get_label() {
+    public function show_label() {
         \WP_CLI::success("$this->_rename_label");
         return $this->_rename_label;
+    }
+
+    /**
+     * Prints the folders we look into for orphaned folders. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli wp-multisite-orphans show_source_dir
+     *
+     * @return void
+     */
+    public function show_source_dir() {
+        $returnThis = $this->get_target_dir();
+        \WP_CLI::success(print_r($returnThis, true));
+        return $returnThis;
+    }
+
+    /**
+     * Prints the destination folder when we move orphaned folders. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli wp-multisite-orphans show_target_dir
+     *
+     * @return void
+     */
+    public function show_target_dir() {
+        $returnThis = $this->get_target_dir();
+        \WP_CLI::success($returnThis);
+        return $returnThis;
     }
 
     /**
@@ -175,7 +210,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     }
 
     /**
-     * Prints rename statements for orphan tables using the standard label {get_label}; no changes are made. Renamed tables do not show up as orphaned tables. No parameters.
+     * Prints rename statements for orphan tables using the standard label {show_label}. No changes are made. Renamed tables do not show up as orphaned tables. No parameters.
      *
      * ## EXAMPLE
      * wp-cli wp-multisite-orphans list_rename_tables
@@ -393,7 +428,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     }
 
     /**
-     * Move orpahned folders into a wp uploads folder named for this package.
+     * Move orphaned folders into a wp uploads folder named for this package.
      *
      * ## PARAMETERS
      *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
@@ -470,14 +505,14 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         if ($limit > 0) {
-            $targets = \array_slice($statements, 0, $limit);
-            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($targets) . ' $statements');
+            $tables = \array_slice($statements, 0, $limit);
+            \WP_CLI::debug("{$fxn}::Cut statements down to " . \count($tables) . ' $statements');
         } else {
-            $targets = $statements;
+            $tables = $statements;
         }
 
         $result = false;
-        foreach ($targets as &$t) {
+        foreach ($tables as &$t) {
             //\WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
 
             if ($dryrun) {
@@ -588,8 +623,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $wpuploadsdir = $this->get_wpuploads_dir();
-        $targetdirs = [$wpuploadsdir, $wpuploadsdir . DIRECTORY_SEPARATOR . 'sites'];
+        $source_dirs = $this->get_source_dirs();
 
         //Gather the orphaned folder names here.
         $orphan_folders = [];
@@ -600,13 +634,13 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $path = null;
         $diritems = null;
-        foreach ($targetdirs as $targetdir) {
-            \WP_CLI::debug("Looking at upload dir={$targetdir}");
+        foreach ($source_dirs as &$t) {
+            \WP_CLI::debug("Looking at upload dir={$t}");
 
-            $diritems = \scandir($targetdir);
+            $diritems = \scandir($t);
             foreach ($diritems as &$i) {
                 \WP_CLI::debug("Looking at subfolder \$i={$i}");
-                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $targetdir . DIRECTORY_SEPARATOR . $i)) {
+                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $t . DIRECTORY_SEPARATOR . $i)) {
                     \WP_CLI::debug(__FUNCTION__ . "::Folder {$path} does not represent an existing blog");
                     $orphan_folders[] = $path;
                 }
@@ -639,21 +673,20 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         if ($limit > 0) {
-            $targets = \array_slice($folders, 0, $limit);
-            \WP_CLI::debug("{$fxn}::Cut folders down to " . \count($targets) . ' $folders');
+            $source_folders = \array_slice($folders, 0, $limit);
+            \WP_CLI::debug("{$fxn}::Cut folders down to " . \count($source_folders) . ' $folders');
         } else {
-            $targets = $folders;
+            $source_folders = $folders;
         }
 
         // Where to put all the moved folders.
-        $wpuploadsdir = $this->get_wpuploads_dir();
-        $target_new_basedir = $wpuploadsdir . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
+        $target_new_basedir = $this->get_target_dir();
         \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_new_basedir}");
 
         if (!$this->dir_present_writable($target_new_basedir)) {
             \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
         }
-        \WP_CLI::success("{$fxn}::Made sure directory exists: {$target_new_basedir}");
+        \WP_CLI::success("{$fxn}::Made sure folder exists: {$target_new_basedir}");
 
         //Prevent web access to this dir.
         $htaccess_location = $target_new_basedir . DIRECTORY_SEPARATOR . '.htaccess';
@@ -674,7 +707,8 @@ EOF;
         }
 
         $result = false;
-        foreach ($targets as &$t) {
+        $wpuploadsdir = $this->get_wpuploads_dir();
+        foreach ($source_folders as &$t) {
             \WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
 
             switch (true) {
@@ -683,12 +717,12 @@ EOF;
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
                     continue 2;
                 case(\stripos(dirname($t), $wpuploadsdir . DIRECTORY_SEPARATOR) === false):
-                    //Security: The orpahned folder path must be under the WP uploads dir.
+                    //Security: The orphaned folder path must be under the WP uploads dir.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the wp uploads folder={$wpuploadsdir}");
                     continue 2;
             }
 
-            //Get the target location relative to the base dir.
+            //Build the target location relative to the target base dir.
             $target_relativedir = \str_replace($wpuploadsdir . DIRECTORY_SEPARATOR, '', $t);
             \WP_CLI::debug("{$fxn}::Built \$target_relativedir={$target_relativedir}");
             $target_new_subparentdir = \dirname($target_new_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
@@ -698,17 +732,16 @@ EOF;
             if (!$dryrun && !$this->dir_present_writable($target_new_subparentdir)) {
                 \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
             }
-            \WP_CLI::success("{$fxn}::Make sure the directory exists: {$target_new_basedir}");
-
-            //Move target folders.
-            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($t);
+            \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_new_basedir}");
 
             //Security: The final built destination path must be under the $target_new_basedir path.
             if (\stripos(dirname($t), $target_new_basedir . DIRECTORY_SEPARATOR) === false) {
-                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the package labelled folder={$target_new_basedir}");
+                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the package-labelled folder={$target_new_basedir}");
                 continue;
             }
 
+            //Move the folders.
+            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($t);
             if (!$dryrun) {
                 $result = rename($t, $target_new_path);
             }
@@ -723,7 +756,50 @@ EOF;
         }
         return $returnThis;
     }
-    
+
+    /**
+     * Get a list of folders that were moved by this package.
+     *
+     * @return array List of DB table names that do not have a matching entry in the WP Multisite wp_blogs table.
+     */
+    private function get_moved_folders(): array {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started");
+
+        $targetdirs = $this->get_target_dir();
+        $orphan_folders = [];
+
+        foreach ($targetdirs as &$t) {
+            \WP_CLI::debug("Looking at upload dir={$t}");
+
+            $diritems = \scandir($t);
+            foreach ($diritems as &$i) {
+                \WP_CLI::debug("Looking at subfolder \$i={$i}");
+                if (\is_numeric($i) && \is_dir($path = $t . DIRECTORY_SEPARATOR . $i)) {
+                    \WP_CLI::debug(__FUNCTION__ . "::Found renamed folder={$path}");
+                    $orphan_folders[] = $i;
+                }
+            }
+        }
+
+        return $orphan_folders;
+    }
+
+    private function get_source_dirs(): array {
+        $wpuploadsdir = $this->get_wpuploads_dir();
+        if (empty($this->source_dirs)) {
+            $this->source_dirs = [$wpuploadsdir, $wpuploadsdir . DIRECTORY_SEPARATOR . 'sites'];
+        }
+        return $this->source_dirs;
+    }
+
+    private function get_target_dir() {
+        if (empty($this->target_dir)) {
+            $this->target_dir = $this->get_wpuploads_dir() . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
+        }
+        return $this->target_dir;
+    }
+
     //==========================================================================
     // Utility methods specific to WordPress
     //==========================================================================
@@ -746,7 +822,7 @@ EOF;
 
         if (\is_file($dir_to_check)) {
             \WP_CLI::debug("{$fxn}::is_file=true for \$dir_to_check={$dir_to_check}; \$perms={$perms}");
-            throw new InvalidArgumentException("Cannot create a directory overwriting an existing file {$dir_to_check}");
+            throw new InvalidArgumentException("Cannot create a folder overwriting an existing file {$dir_to_check}");
         }
         if (!\is_dir($dir_to_check)) {
             \WP_CLI::debug("{$fxn}::is_dir=false for \$dir_to_check={$dir_to_check}, so try to make it");
