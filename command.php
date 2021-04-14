@@ -263,6 +263,31 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     }
 
     /**
+     * Prints a list of orphaned folders that were moved by this package. No parameters.
+     *
+     * ## EXAMPLE
+     * wp-cli wp-multisite-orphans list_moved_folders
+     *
+     * @return void
+     */
+    public function list_moved_folders(): array {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        \WP_CLI::debug("{$fxn}::Started");
+
+        $items = $this->get_moved_folders();
+        if (\count($items) < 1) {
+            \WP_CLI::success("No moved folders found");
+            return[];
+        }
+
+        foreach ($items as &$i) {
+            \WP_CLI::log("{$i}");
+        }
+        \WP_CLI::success(\count($items) . ' moved folders');
+        return $items;
+    }
+
+    /**
      * Rename orphaned tables with a standard label + hashed table name. Renamed tables do not show up as orphaned tables.
      *
      * ## PARAMETERS
@@ -333,7 +358,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     }
 
     /**
-     * Drop tables that were renamed by this plugin.
+     * Drop tables that were renamed by this package.
      *
      * ## PARAMETERS
      *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
@@ -368,7 +393,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     }
 
     /**
-     * Move orpahned folders into a wp uploads folder named for this plugin.
+     * Move orpahned folders into a wp uploads folder named for this package.
      *
      * ## PARAMETERS
      *      --limit=<int> Only attempt rename on this number of tables (when sorted alphabetically ASC).
@@ -454,16 +479,12 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $result = false;
         foreach ($targets as &$t) {
             //\WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
-            if ($dryrun) {
-                $result = false;
-                $returnThis->failed++;
-                \WP_CLI::success("(Dry run) {$t}");
-                continue;
-            }
 
-            $result = $this->db->query($t);
+            if ($dryrun) {
+                $result = $this->db->query($t);
+            }
             // Table renames do not return a success result.
-            if (\stripos($t, 'RENAME TABLE ') !== false || $result) {
+            if ($dryrun || \stripos($t, 'RENAME TABLE ') !== false || $result) {
                 $returnThis->changed++;
                 \WP_CLI::success("{$fxn}::\$t={$t}");
             } else {
@@ -626,16 +647,17 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         // Where to put all the moved folders.
         $wpuploadsdir = $this->get_wpuploads_dir();
-        $target_basedir = $wpuploadsdir . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
-        \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_basedir}");
+        $target_new_basedir = $wpuploadsdir . DIRECTORY_SEPARATOR . (new \ReflectionClass(__CLASS__))->getShortName();
+        \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_new_basedir}");
 
-        if (!$this->dir_present_writable($target_basedir)) {
-            \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
+        if (!$this->dir_present_writable($target_new_basedir)) {
+            \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
         }
-        \WP_CLI::success("{$fxn}::Created directory {$target_basedir}");
+        \WP_CLI::success("{$fxn}::Made sure directory exists: {$target_new_basedir}");
 
-        $htaccess_location = $target_basedir . DIRECTORY_SEPARATOR . '.htaccess';
-        if (!file_exists($htaccess_location)) {
+        //Prevent web access to this dir.
+        $htaccess_location = $target_new_basedir . DIRECTORY_SEPARATOR . '.htaccess';
+        if (!\file_exists($htaccess_location)) {
             $htaccess_content = <<<EOF
 <IfModule mod_authz_core.c>
     Require all denied
@@ -645,7 +667,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
     Deny from all
 </IfModule>
 EOF;
-            $success = file_put_contents($htaccess_location, $htaccess_content);
+            $success = \file_put_contents($htaccess_location, $htaccess_content);
             if (!$success) {
                 \WP_CLI::error("{$fxn}::Failed to create .htaccess file in {$htaccess_location}");
             }
@@ -656,47 +678,52 @@ EOF;
             \WP_CLI::debug("{$fxn}::Looking at \$t={$t}");
 
             switch (true) {
-                case (realpath($t) == realpath($wpuploadsdir)):
+                case (\realpath($t) == \realpath($wpuploadsdir)):
                     //The path must not be the wp_uploads folder itself.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
                     continue 2;
-                case(\stripos(dirname($t), $wpuploadsdir) === false):
-                    //Security: the path must be under the WP uploads dir.
+                case(\stripos(dirname($t), $wpuploadsdir . DIRECTORY_SEPARATOR) === false):
+                    //Security: The orpahned folder path must be under the WP uploads dir.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the wp uploads folder={$wpuploadsdir}");
-                    continue 2;
-                case($dryrun):
-                    $result = false;
-                    $returnThis->failed++;
-                    \WP_CLI::success("(Dry run) Move \$t={$t} to ");
                     continue 2;
             }
 
             //Get the target location relative to the base dir.
-            $target_relativedir = str_replace($wpuploadsdir . DIRECTORY_SEPARATOR, '', $t);
+            $target_relativedir = \str_replace($wpuploadsdir . DIRECTORY_SEPARATOR, '', $t);
             \WP_CLI::debug("{$fxn}::Built \$target_relativedir={$target_relativedir}");
-            $target_new_subparentdir = dirname($target_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
+            $target_new_subparentdir = \dirname($target_new_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
             \WP_CLI::debug("{$fxn}::Built \$target_new_subdir={$target_new_subparentdir}");
 
-            //Re-create the wp_uploads folder structure in this plugin's labelled dir.
-            if (!$this->dir_present_writable($target_new_subparentdir)) {
-                \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
+            //Re-create the wp_uploads folder structure in this package's labelled dir.
+            if (!$dryrun && !$this->dir_present_writable($target_new_subparentdir)) {
+                \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
             }
-            \WP_CLI::success("{$fxn}::Created directory {$target_basedir}");
+            \WP_CLI::success("{$fxn}::Make sure the directory exists: {$target_new_basedir}");
 
             //Move target folders.
-//            //            $result = rename($t, $target_relativedir.DIRECTORY_SEPARATOR.basename($t));
-//            if ($result) {
-//                $returnThis->changed++;
-//                \WP_CLI::success("{$fxn}::\$t={$t}");
-//            } else {
-//                $returnThis->failed++;
-//                \WP_CLI::warning("{$fxn}::\$t={$t}");
-//            }
+            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($t);
+
+            //Security: The final built destination path must be under the $target_new_basedir path.
+            if (\stripos(dirname($t), $target_new_basedir . DIRECTORY_SEPARATOR) === false) {
+                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($t) . "is not under the package labelled folder={$target_new_basedir}");
+                continue;
+            }
+
+            if (!$dryrun) {
+                $result = rename($t, $target_new_path);
+            }
+            if ($dryrun || $result) {
+                $returnThis->changed++;
+                \WP_CLI::success("{$fxn}::Moved {$t} to {$target_new_path}");
+            } else {
+                $returnThis->failed++;
+                \WP_CLI::warning("{$fxn}::Failed to move {$t} to {$target_new_path}");
+            }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
         return $returnThis;
     }
-
+    
     //==========================================================================
     // Utility methods specific to WordPress
     //==========================================================================
@@ -711,7 +738,7 @@ EOF;
     // Utility methods not specific to this class.
     //==========================================================================
 
-    private function dir_present_writable(string $dir_to_check, $perms = 0755): bool {
+    private function dir_present_writable(string $dir_to_check, $perms = 0755, $recursive = false): bool {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with \$dir_to_check={$dir_to_check}; \$perms={$perms}");
 
@@ -723,7 +750,7 @@ EOF;
         }
         if (!\is_dir($dir_to_check)) {
             \WP_CLI::debug("{$fxn}::is_dir=false for \$dir_to_check={$dir_to_check}, so try to make it");
-            $success = mkdir($dir_to_check, $perms);
+            $success = \mkdir($dir_to_check, $perms, $recursive);
             \WP_CLI::debug("{$fxn}::mkdir={$success} for \$dir_to_check={$dir_to_check}");
             if (!$success) {
                 return false;
