@@ -70,6 +70,8 @@ Move the first 3 orphaned folders into a wp uploads folder named for this packag
 
     wp-cli wp-multisite-orphans do_move_folders --limit=3
 
+See also `show_source_dirs` and `show_target_dir`
+
 
 ## Installing
 

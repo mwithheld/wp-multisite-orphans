@@ -492,7 +492,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $returnThis = (object) ['changed' => 0, 'failed' => 0];
         if (empty($statements) || $limit < 0) {
-            \WP_CLI::debug("{$fxn}::No statements or invalid limit");
+            \WP_CLI::log("{$fxn}::No statements or invalid limit");
             return $returnThis;
         }
 
@@ -660,15 +660,15 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $returnThis = (object) ['changed' => 0, 'failed' => 0];
         if (empty($folders) || $limit < 0) {
-            \WP_CLI::debug("{$fxn}::No statements or invalid limit");
+            \WP_CLI::log("{$fxn}::No folders found or invalid limit");
             return $returnThis;
         }
 
         if ($limit > 0) {
-            $source_folders = \array_slice($folders, 0, $limit);
-            \WP_CLI::debug("{$fxn}::Cut folders down to " . \count($source_folders) . ' $folders');
+            $orphaned_folder = \array_slice($folders, 0, $limit);
+            \WP_CLI::debug("{$fxn}::Cut \$orphaned_folder folders list down to " . \count($orphaned_folder) . ' entries');
         } else {
-            $source_folders = $folders;
+            $orphaned_folder = $folders;
         }
 
         // Where to put all the moved folders.
@@ -700,51 +700,49 @@ EOF;
 
         $result = false;
         $wpuploadsdir = $this->get_wpuploads_dir();
-        foreach ($source_folders as &$this_folder) {
-            \WP_CLI::debug("{$fxn}::Looking at \$i={$this_folder}");
+        foreach ($orphaned_folder as &$this_orhaneddir) {
+            \WP_CLI::debug("{$fxn}::Looking at \$this_sourcedir={$this_orhaneddir}");
 
             switch (true) {
-                case (\realpath($this_folder) == \realpath($wpuploadsdir)):
+                case (\realpath($this_orhaneddir) == \realpath($wpuploadsdir)):
                     //The path must not be the wp_uploads folder itself.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
                     continue 2;
-                case(!$this->is_subdir_of($this_folder, $wpuploadsdir)):
+                case(!$this->is_subdir_of($this_orhaneddir, $wpuploadsdir)):
                     //Security: The orphaned folder path must be under the WP uploads dir.
                     $returnThis->failed++;
-                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($this_folder) . " is not under the wp uploads folder={$wpuploadsdir}");
+                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($this_orhaneddir) . " is not under the wp uploads folder={$wpuploadsdir}");
                     continue 2;
             }
 
             //Build the target location relative to the target base dir.
-            $target_new_subparentdir = $this->get_sourcedir_in_targetdir($this_folder);
-            \WP_CLI::debug("{$fxn}::Built \$target_new_subdir={$target_new_subparentdir}");
+            $target_dir = $this->get_sourcedir_in_targetdir($this_orhaneddir);
+            \WP_CLI::debug("{$fxn}::Built \:Built $target_dir={$target_dir}");
 
-            //Re-create the wp_uploads folder structure in this package's labelled dir.
-            if (!$dryrun && !$this->dir_present_writable($target_new_subparentdir)) {
+            //Re-create the sourcedir parent folder structure in the target dir.
+            $target_dir_parent = dirname($target_dir);
+            if (!$dryrun && !$this->dir_present_writable($target_dir_parent)) {
                 \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
             }
-            \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_basedir}");
-
-            $target_full_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($this_folder);
-            \WP_CLI::debug("{$fxn}::Built \$target_full_path={$target_full_path}");
+            \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_dir_parent}");
 
             //Security: The final built destination path must be under the $target_new_basedir path.
-            if (!$this->is_subdir_of($target_full_path, $target_basedir, false)) {
-                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its destination={$target_basedir} is not under the target package-labelled folder={$target_basedir}");
+            if (!$this->is_subdir_of($target_dir, $target_basedir, false)) {
+                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its destination={$target_dir} is not under the target package-labelled folder={$target_basedir}");
                 $returnThis->failed++;
                 continue;
             }
 
             //Move the folders.
             if (!$dryrun) {
-                $result = rename($this_folder, $target_full_path);
+                $result = rename($this_orhaneddir, $target_dir);
             }
             if ($dryrun || $result) {
                 $returnThis->changed++;
-                \WP_CLI::success("{$fxn}::Moved {$this_folder} to {$target_full_path}");
+                \WP_CLI::success("{$fxn}::Moved {$this_orhaneddir} to {$target_dir}");
             } else {
                 $returnThis->failed++;
-                \WP_CLI::warning("{$fxn}::Failed to move {$this_folder} to {$target_full_path}");
+                \WP_CLI::warning("{$fxn}::Failed to move {$this_orhaneddir} to {$target_dir}");
             }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
