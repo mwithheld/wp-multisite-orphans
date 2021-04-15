@@ -80,13 +80,13 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * Prints the folders we look into for orphaned folders. No parameters.
      *
      * ## EXAMPLE
-     * wp-cli wp-multisite-orphans show_source_dir
+     * wp-cli wp-multisite-orphans show_source_dirs
      *
      * @return void
      */
-    public function show_source_dir() {
+    public function show_source_dirs() {
         $returnThis = $this->get_target_dir();
-        \WP_CLI::success(print_r($returnThis, true));
+        \WP_CLI::success(serialize($returnThis));
         return $returnThis;
     }
 
@@ -306,9 +306,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         foreach ($items as &$i) {
-            \WP_CLI::log("{$i}");
+            \WP_CLI::log($i);
         }
-        \WP_CLI::success(\count($items) . ' moved folders');
+        
+        $targetdir = $this->get_target_dir();
+        \WP_CLI::success(\count($items) . " moved folders found under target dir={$targetdir}");
         return $items;
     }
 
@@ -331,7 +333,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      */
     public function do_rename_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+        \WP_CLI::debug("{$fxn}::Started with args=" . serialize($args) . '; $assoc_args=' . serialize($assoc_args));
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
@@ -366,7 +368,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      */
     public function do_drop_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+        \WP_CLI::debug("{$fxn}::Started with args=" . serialize($args) . '; $assoc_args=' . serialize($assoc_args));
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
@@ -401,7 +403,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      */
     public function do_drop_renamed_tables(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+        \WP_CLI::debug("{$fxn}::Started with args=" . serialize($args) . '; $assoc_args=' . serialize($assoc_args));
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
@@ -436,7 +438,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      */
     public function do_move_folders(array $args, array $assoc_args): \stdClass {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
-        \WP_CLI::debug("{$fxn}::Started with args=" . \print_r($args, true) . '; $assoc_args=' . \print_r($assoc_args, true));
+        \WP_CLI::debug("{$fxn}::Started with args=" . serialize($args) . '; $assoc_args=' . serialize($assoc_args));
 
         \WP_CLI::confirm('BE CAREFUL, this cannot be easily undone so please backup your database before proceeding. Are you sure you want to proceed?', $assoc_args);
 
@@ -485,8 +487,8 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with " . \count($statements) . " statements; \$limit={$limit}; \$dryrun={$dryrun}");
 
-        $dryrun && \WP_CLI::debug("{$fxn}::Dry run, so do not actually make any changes");
-        $limit && \WP_CLI::debug("{$fxn}::Limiting to {$limit} tables");
+        $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
+        $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $returnThis = (object) ['changed' => 0, 'failed' => 0];
         if (empty($statements) || $limit < 0) {
@@ -624,13 +626,13 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
 
         $path = null;
         $diritems = null;
-        foreach ($source_dirs as &$i) {
-            \WP_CLI::debug("{$fxn}::Looking at upload dir={$i}");
-
-            $diritems = \scandir($i);
+        foreach ($source_dirs as &$s) {
+            \WP_CLI::debug("{$fxn}::Looking at upload dir={$s}");
+            //Get list of subfolders below th
+            $diritems = \scandir($s);
             foreach ($diritems as &$i) {
-                \WP_CLI::debug("{$fxn}::Looking at subfolder \$i={$i}");
-                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $i . DIRECTORY_SEPARATOR . $i)) {
+                \WP_CLI::debug("{$fxn}::Looking at subfolder={$i}; in_array(\$existing_blog_ids)=" . \in_array($i, $existing_blog_ids) . "\is_dir({$s} . DIRECTORY_SEPARATOR . {$i})=" . ($s . DIRECTORY_SEPARATOR . $i));
+                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $s . DIRECTORY_SEPARATOR . $i)) {
                     \WP_CLI::debug("{$fxn}::Folder={$path} does not represent an existing blog");
                     $orphan_folders[] = $path;
                 }
@@ -653,8 +655,8 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started with " . \count($folders) . " folders; \$limit={$limit}; \$dryrun={$dryrun}");
 
-        $dryrun && \WP_CLI::debug("{$fxn}::Dry run, so do not actually make any changes");
-        $limit && \WP_CLI::debug("{$fxn}::Limiting to {$limit} tables");
+        $dryrun && \WP_CLI::log("{$fxn}::Dry run, so do not actually make any changes");
+        $limit && \WP_CLI::log("{$fxn}::Limiting to {$limit} tables");
 
         $returnThis = (object) ['changed' => 0, 'failed' => 0];
         if (empty($folders) || $limit < 0) {
@@ -670,16 +672,16 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         }
 
         // Where to put all the moved folders.
-        $target_new_basedir = $this->get_target_dir();
-        \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_new_basedir}");
+        $target_basedir = $this->get_target_dir();
+        \WP_CLI::debug("{$fxn}::Built \$target_basedir={$target_basedir}");
 
-        if (!$this->dir_present_writable($target_new_basedir)) {
-            \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
+        if (!$this->dir_present_writable($target_basedir)) {
+            \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
         }
-        \WP_CLI::success("{$fxn}::Made sure folder exists: {$target_new_basedir}");
+        \WP_CLI::success("{$fxn}::Made sure folder exists: {$target_basedir}");
 
         //Prevent web access to this dir.
-        $htaccess_location = $target_new_basedir . DIRECTORY_SEPARATOR . '.htaccess';
+        $htaccess_location = $target_basedir . DIRECTORY_SEPARATOR . '.htaccess';
         if (!\file_exists($htaccess_location)) {
             $htaccess_content = <<<EOF
 <IfModule mod_authz_core.c>
@@ -698,49 +700,51 @@ EOF;
 
         $result = false;
         $wpuploadsdir = $this->get_wpuploads_dir();
-        foreach ($source_folders as &$i) {
-            \WP_CLI::debug("{$fxn}::Looking at \$i={$i}");
+        foreach ($source_folders as &$this_folder) {
+            \WP_CLI::debug("{$fxn}::Looking at \$i={$this_folder}");
 
             switch (true) {
-                case (\realpath($i) == \realpath($wpuploadsdir)):
+                case (\realpath($this_folder) == \realpath($wpuploadsdir)):
                     //The path must not be the wp_uploads folder itself.
                     \WP_CLI::warning("{$fxn}::Skipping invalid request to move the wp uploads folder itself");
                     continue 2;
-                case(\stripos(dirname($i), $wpuploadsdir . DIRECTORY_SEPARATOR) === false):
+                case(!$this->is_subdir_of($this_folder, $wpuploadsdir)):
                     //Security: The orphaned folder path must be under the WP uploads dir.
-                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($i) . "is not under the wp uploads folder={$wpuploadsdir}");
+                    $returnThis->failed++;
+                    \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($this_folder) . " is not under the wp uploads folder={$wpuploadsdir}");
                     continue 2;
             }
 
             //Build the target location relative to the target base dir.
-            $target_relativedir = $this->get_path_relative_to_uploads($i);
-            \WP_CLI::debug("{$fxn}::Built \$target_relativedir={$target_relativedir}");
-            $target_new_subparentdir = \dirname($target_new_basedir . DIRECTORY_SEPARATOR . $target_relativedir);
+            $target_new_subparentdir = $this->get_sourcedir_in_targetdir($this_folder);
             \WP_CLI::debug("{$fxn}::Built \$target_new_subdir={$target_new_subparentdir}");
 
             //Re-create the wp_uploads folder structure in this package's labelled dir.
             if (!$dryrun && !$this->dir_present_writable($target_new_subparentdir)) {
-                \WP_CLI::error("{$fxn}::The folder {$target_new_basedir} could not be created");
+                \WP_CLI::error("{$fxn}::The folder {$target_basedir} could not be created");
             }
-            \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_new_basedir}");
+            \WP_CLI::success("{$fxn}::Make sure the folder exists: {$target_basedir}");
+
+            $target_full_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($this_folder);
+            \WP_CLI::debug("{$fxn}::Built \$target_full_path={$target_full_path}");
 
             //Security: The final built destination path must be under the $target_new_basedir path.
-            if (\stripos(dirname($i), $target_new_basedir . DIRECTORY_SEPARATOR) === false) {
-                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its parent dir " . dirname($i) . "is not under the package-labelled folder={$target_new_basedir}");
+            if (!$this->is_subdir_of($target_full_path, $target_basedir, false)) {
+                \WP_CLI::warning("{$fxn}::Skipping invalid request to move file bc its destination={$target_basedir} is not under the target package-labelled folder={$target_basedir}");
+                $returnThis->failed++;
                 continue;
             }
 
             //Move the folders.
-            $target_new_path = $target_new_subparentdir . DIRECTORY_SEPARATOR . \basename($i);
             if (!$dryrun) {
-                $result = rename($i, $target_new_path);
+                $result = rename($this_folder, $target_full_path);
             }
             if ($dryrun || $result) {
                 $returnThis->changed++;
-                \WP_CLI::success("{$fxn}::Moved {$i} to {$target_new_path}");
+                \WP_CLI::success("{$fxn}::Moved {$this_folder} to {$target_full_path}");
             } else {
                 $returnThis->failed++;
-                \WP_CLI::warning("{$fxn}::Failed to move {$i} to {$target_new_path}");
+                \WP_CLI::warning("{$fxn}::Failed to move {$this_folder} to {$target_full_path}");
             }
             //\WP_CLI::debug("{$fxn}::Got \$result=" . \print_r($result, true));
         }
@@ -756,20 +760,27 @@ EOF;
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
         \WP_CLI::debug("{$fxn}::Started");
 
-        $targetdir = $this->get_target_dir();
-        \WP_CLI::debug("{$fxn}::Got \$targetdirs={$targetdirs}");
         $orphan_folders = [];
+        $targetdir = $this->get_target_dir();
+        \WP_CLI::debug("{$fxn}::Got \$targetdir={$targetdir}");
 
-        $diritems = \scandir($targetdir);
-        foreach ($diritems as &$i) {
-            \WP_CLI::debug("{$fxn}::Looking at subfolder={$i}");
-            \WP_CLI::error('Not implemented');
-//            if (\is_dir($i)) {
-//                \WP_CLI::debug("{$fxn}::Found moved folder={$path}");
-//                $orphan_folders[] = $i;
-//            }
+        foreach ($this->get_source_dirs() as $this_sourcedir) {
+            //Get path inside $targetdir that represent each $source_dir.
+            $possible_targetdir = $this->get_sourcedir_in_targetdir($this_sourcedir);
+            \WP_CLI::debug("{$fxn}::Looking for moved folders in parent folder={$possible_targetdir}");
+
+            $diritems = \scandir($possible_targetdir);
+            foreach ($diritems as &$this_dirname) {
+                \WP_CLI::debug("{$fxn}::Looking at folder={$this_dirname}");
+                $possible_target_fullpath=$possible_targetdir . DIRECTORY_SEPARATOR . $this_dirname;
+                if (is_numeric($this_dirname) && \is_dir($possible_target_fullpath)) {
+                    \WP_CLI::debug("{$fxn}::Found moved folder={$possible_target_fullpath}");
+                    $orphan_folders[] = $possible_target_fullpath;
+                }
+            }
         }
 
+        \WP_CLI::debug("{$fxn}::About to return \$orphan_folders=".print_r($orphan_folders, true));
         return $orphan_folders;
     }
 
@@ -788,6 +799,14 @@ EOF;
         return $this->target_dir;
     }
 
+    private function get_sourcedir_in_targetdir(string $sourcedir): string {
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+        $relative_path = $this->get_path_relative_to_uploads($sourcedir);
+        \WP_CLI::debug("{$fxn}::Got \$relative_path={$relative_path}");
+        // We never want a trailing slash, so if $relative path is empty, remove the trailing slash.
+        return rtrim($this->get_target_dir() . DIRECTORY_SEPARATOR . $relative_path, DIRECTORY_SEPARATOR);
+    }
+
     //==========================================================================
     // Utility methods specific to WordPress
     //==========================================================================
@@ -799,7 +818,8 @@ EOF;
     }
 
     private function get_path_relative_to_uploads(string $folder): string {
-        return \str_replace($folder . DIRECTORY_SEPARATOR, '');
+        // We never want a leading or trailing slash since it it a relative dir.
+        return \trim(\str_replace($this->wpuploadsdir, '', $folder), DIRECTORY_SEPARATOR);
     }
 
     //==========================================================================
@@ -845,6 +865,25 @@ EOF;
     private function get_number_from_table_name($tablename): int {
         $noPrefix = \preg_replace('/^' . $this->db->prefix . '/', '', $tablename);
         return (int) \substr($noPrefix, 0, \strpos($noPrefix, '_'));
+    }
+
+    /**
+     * Check if $dir is a child folder of $parentdir. Does not use realpath.
+     * 
+     * @param string $parentdir
+     * @param string $child
+     */
+    private function is_subdir_of(string $child, string $parentdir, bool $childmustbedir = true): bool {
+        $debug = false;
+        if ($debug) {
+            echo "is_dir({$parentdir})=" . is_dir($parentdir) . "\n";
+            echo "is_dir({$child})=" . is_dir($child) . "\n";
+            echo "({$childmustbedir} || is_dir({$child}))=" . ($childmustbedir || is_dir($child)) . "\n";
+            echo "dirname({$child})=" . dirname($child) . "\n";
+            echo "\stripos(dirname({$child}), {$parentdir})!==false" . print_r(\stripos(dirname($child), $parentdir) !== false, true) . "\n";
+        }
+        return is_dir($parentdir) && (!$childmustbedir || is_dir($child)) &&
+                \stripos(dirname($child), $parentdir) !== false;
     }
 
 }

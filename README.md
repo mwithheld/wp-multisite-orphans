@@ -29,7 +29,7 @@ Quick links: [Using](#using) | [Installing](#installing) | [Contributing](#contr
 |`wp-cli wp-multisite-orphans list_tables`|Prints orphan table names in plain text. Renamed tables do not show up as orphaned tables. No parameters.|
 |--- | --- |
 |`wp-cli wp-multisite-orphans show_label`|Prints the rename label. No parameters.|
-|`wp-cli wp-multisite-orphans show_source_dir`|Prints the folders we look into for orphaned folders. No parameters.|
+|`wp-cli wp-multisite-orphans show_source_dirs`|Prints the folders we look into for orphaned folders. No parameters.|
 |`wp-cli wp-multisite-orphans show_target_dir`|Prints the destination directory when we move orphaned folders. No parameters.|
 
 ### Rename orphaned tables
