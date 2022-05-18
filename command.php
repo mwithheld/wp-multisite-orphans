@@ -549,7 +549,11 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
      * @return array See the description.
      */
     private function get_existing_blog_ids(): array {
-        return $this->db->get_col("SELECT blog_id FROM {$this->db->blogs} ORDER BY blog_id");
+        $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
+
+        $existing_blog_ids = $this->db->get_col("SELECT blog_id FROM {$this->db->blogs} ORDER BY blog_id");
+        \WP_CLI::debug("{$fxn}::Found " . \count($existing_blog_ids) . " existing_blog_ids=\n" . implode($existing_blog_ids, "\n"));
+        return $existing_blog_ids;
     }
 
     /**
@@ -631,8 +635,9 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
             //Get list of subfolders below th
             $diritems = \scandir($s);
             foreach ($diritems as &$i) {
-                \WP_CLI::debug("{$fxn}::Looking at subfolder={$i}; in_array(\$existing_blog_ids)=" . \in_array($i, $existing_blog_ids) . "\is_dir({$s} . DIRECTORY_SEPARATOR . {$i})=" . ($s . DIRECTORY_SEPARATOR . $i));
-                if (\is_numeric($i) && \in_array($i, $existing_blog_ids) && \is_dir($path = $s . DIRECTORY_SEPARATOR . $i)) {
+                $is_dir = \is_dir($path = $s . DIRECTORY_SEPARATOR . $i);
+                \WP_CLI::debug("{$fxn}::Looking at subfolder={$i}; in_array(\$existing_blog_ids)=" . \in_array($i, $existing_blog_ids) . "\is_dir({$s} . DIRECTORY_SEPARATOR . {$i})={$is_dir}");
+                if (\is_numeric($i) && $is_dir && !\in_array($i, $existing_blog_ids)) {
                     \WP_CLI::debug("{$fxn}::Folder={$path} does not represent an existing blog");
                     $orphan_folders[] = $path;
                 }
