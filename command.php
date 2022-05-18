@@ -552,7 +552,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $fxn = \implode('::', [__CLASS__, __FUNCTION__]);
 
         $existing_blog_ids = $this->db->get_col("SELECT blog_id FROM {$this->db->blogs} ORDER BY blog_id");
-        \WP_CLI::debug("{$fxn}::Found " . \count($existing_blog_ids) . " existing_blog_ids=\n" . implode($existing_blog_ids, "\n"));
+        \WP_CLI::debug("{$fxn}::Found " . \count($existing_blog_ids) . " existing_blog_ids=\n" . implode("\n", $existing_blog_ids));
         return $existing_blog_ids;
     }
 
