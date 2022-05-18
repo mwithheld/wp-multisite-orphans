@@ -228,7 +228,7 @@ class WP_Multisite_Orphans extends \WP_CLI_Command {
         $tablename_new = '';
         $sql = '';
         foreach ($items as &$i) {
-            $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->rename_label . '_' . \sha1("{$i}"), "{$i}");
+            $tablename_new = \str_replace($i, "{$this->db->prefix}" . $this->rename_label . '_' . $i, "{$i}");
             $sql = "RENAME TABLE {$i} TO {$tablename_new};";
             !$internal && \WP_CLI::log($sql);
             $returnThis[] = $sql;
